@@ -11,21 +11,52 @@ El proyecto está desarrollado siguiendo la arquitectura **MVC (Model - View - C
 ---
 
 # 📂 Estructura del Proyecto
-
-```text
-sokoban/
-│
-├── src/
-│   ├── modelo/
-│   ├── vista/
-│   ├── controlador/
-│   └── Main.java
-│
-├── assets/
-│   └── niveles/
-│
-├── README.md
 ```
+src/
+├── Main.java
+├── controlador/
+│   
+├── modelo/
+│   ├── casilla/               
+│   │   ├── Casilla.java
+│   │   ├── Piso.java
+│   │   ├── Pared.java
+│   │   ├── Meta.java
+│   │   ├── Hielo.java
+│   │   ├── Portal.java
+│   │   ├── Muro.java
+│   │   └── Cerrojo.java
+│   ├── entidad/
+│   │   ├── Entidad.java      
+│   │   ├── Jugador.java       
+│   │   └── Caja.java           
+│   ├── comportamiento/         Strategy 
+│   │   
+│   ├── fabrica/                
+│   │   ├── FabricaSkinJugador.java
+│   │   ├── SkinClasica.java
+│   │   └── casilla/           
+│   │       ├── CreadorCasilla.java
+│   │       ├── Creador*.java
+│   │       └── RegistroCreadores.java
+│   ├── cargador/
+│   │   ├── CargadorNivel.java 
+│   │   ├── CargadorTxt.java
+│   └── tablero/
+│       ├── Tablero.java
+│       ├── EstadoJuego.java
+│       └── ResultadoCarga.java
+├── vista/
+│   ├── VentanaPrincipal.java
+│   ├── PanelTablero.java
+│   └── PanelHUD.java
+├── recursos/
+│   ├── imagenes/               
+│   └── sonidos/               
+└── niveles/
+    └── nivel1.txt
+```
+
 
 ---
 
