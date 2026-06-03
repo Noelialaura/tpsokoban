@@ -9,7 +9,7 @@ import vista.VentanaPrincipal;
 public class Main {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            NivelSwing nivel = cargarNivel("niveles/nivel1.txt");
+            NivelSwing nivel = cargarNivel("niveles/nivelPochoclera.txt");
             VentanaPrincipal ventana = new VentanaPrincipal(nivel);
             ventana.setVisible(true);
         });
