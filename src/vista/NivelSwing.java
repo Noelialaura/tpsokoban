@@ -1,6 +1,10 @@
 package vista;
 
 import modelo.Casilla;
+import modelo.ResultadoCarga;
+import modelo.entidad.Caja;
+
+import java.util.List;
 
 public class NivelSwing {
     private final Casilla[][] tablero;
@@ -8,6 +12,7 @@ public class NivelSwing {
     private final int filaJugadorInicial;
     private final int columnaJugadorInicial;
 
+    /** Constructor original (hardcodeado / demo). */
     public NivelSwing(
             Casilla[][] tablero,
             boolean[][] cajasIniciales,
@@ -20,21 +25,33 @@ public class NivelSwing {
         this.columnaJugadorInicial = columnaJugadorInicial;
     }
 
-    public Casilla[][] getTablero() {
-        return tablero;
+    /**
+     * Constructor que acepta el resultado del CargadorNivel.
+     * Convierte la List<Caja> del DTO en el boolean[][] que usa internamente NivelSwing.
+     */
+    public NivelSwing(ResultadoCarga resultado) {
+        Casilla[][] t    = resultado.getGrilla();
+        int filas        = resultado.getFilas();
+        int columnas     = resultado.getColumnas();
+        boolean[][] cajas = new boolean[filas][columnas];
+
+        for (Caja caja : resultado.getCajas()) {
+            cajas[caja.getY()][caja.getX()] = true;
+        }
+
+        validarNivel(t, cajas, resultado.getJugadorY(), resultado.getJugadorX());
+        this.tablero               = t;
+        this.cajasIniciales        = copiarCajas(cajas);
+        this.filaJugadorInicial    = resultado.getJugadorY();
+        this.columnaJugadorInicial = resultado.getJugadorX();
     }
 
-    public boolean[][] crearCajas() {
-        return copiarCajas(cajasIniciales);
-    }
+    public Casilla[][] getTablero() { return tablero; }
 
-    public int getFilaJugadorInicial() {
-        return filaJugadorInicial;
-    }
+    public boolean[][] crearCajas() { return copiarCajas(cajasIniciales); }
 
-    public int getColumnaJugadorInicial() {
-        return columnaJugadorInicial;
-    }
+    public int getFilaJugadorInicial()    { return filaJugadorInicial; }
+    public int getColumnaJugadorInicial() { return columnaJugadorInicial; }
 
     private void validarNivel(
             Casilla[][] tablero,
@@ -44,11 +61,9 @@ public class NivelSwing {
         if (tablero == null || tablero.length == 0 || tablero[0].length == 0) {
             throw new IllegalArgumentException("El tablero no puede estar vacio.");
         }
-
         if (cajasIniciales == null || cajasIniciales.length != tablero.length) {
             throw new IllegalArgumentException("Las cajas deben coincidir con el tamanio del tablero.");
         }
-
         int columnas = tablero[0].length;
         for (int fila = 0; fila < tablero.length; fila++) {
             if (tablero[fila] == null || tablero[fila].length != columnas) {
@@ -66,7 +81,6 @@ public class NivelSwing {
                 }
             }
         }
-
         if (!estaEnTablero(tablero, filaJugadorInicial, columnaJugadorInicial)) {
             throw new IllegalArgumentException("La posicion inicial del jugador no esta dentro del tablero.");
         }
