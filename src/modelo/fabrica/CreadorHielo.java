@@ -1,4 +1,6 @@
-package modelo;
+package modelo.fabrica;
+
+import modelo.*;
 
 public class CreadorHielo implements CreadorCasilla{
 

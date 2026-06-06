@@ -1,4 +1,6 @@
-package modelo;
+package modelo.fabrica;
+
+import modelo.*;
 
 public class CreadorPiso implements CreadorCasilla{
 
