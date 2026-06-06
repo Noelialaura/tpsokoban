@@ -4,8 +4,9 @@ public class CreadorPortal implements CreadorCasilla{
 
 	@Override
 	public Casilla crearCasilla() {
-		// TODO Auto-generated method stub
-		return new Portal();
+		Portal portal = new Portal();
+		portal.setId('A');
+		return portal;
 	}
 
 }
