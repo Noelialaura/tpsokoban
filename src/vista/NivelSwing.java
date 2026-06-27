@@ -2,15 +2,21 @@ package vista;
 
 import modelo.Casilla;
 import modelo.ResultadoCarga;
+import modelo.cargador.CargadorNivel;
+import modelo.cargador.CargadorTxt;
 import modelo.entidad.Caja;
+import modelo.entidad.Jugador;
+import modelo.entidad.Tablero;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class NivelSwing {
-    private final Casilla[][] tablero;
-    private final boolean[][] cajasIniciales;
-    private final int filaJugadorInicial;
-    private final int columnaJugadorInicial;
+    private String ruta;
+    private Casilla[][] tablero;
+    private List<Caja> cajasIniciales;
+    private int filaJugadorInicial;
+    private int columnaJugadorInicial;
 
     /** Constructor original (hardcodeado / demo). */
     public NivelSwing(
@@ -18,9 +24,10 @@ public class NivelSwing {
             boolean[][] cajasIniciales,
             int filaJugadorInicial,
             int columnaJugadorInicial) {
+        this.ruta = null;
         validarNivel(tablero, cajasIniciales, filaJugadorInicial, columnaJugadorInicial);
         this.tablero = tablero;
-        this.cajasIniciales = copiarCajas(cajasIniciales);
+        this.cajasIniciales = crearListaCajas(cajasIniciales);
         this.filaJugadorInicial = filaJugadorInicial;
         this.columnaJugadorInicial = columnaJugadorInicial;
     }
@@ -30,6 +37,25 @@ public class NivelSwing {
      * Convierte la List<Caja> del DTO en el boolean[][] que usa internamente NivelSwing.
      */
     public NivelSwing(ResultadoCarga resultado) {
+        this.ruta = null;
+        cargarResultado(resultado);
+    }
+
+    public NivelSwing(String ruta) {
+        this.ruta = ruta;
+        recargar();
+    }
+
+    public void recargar() {
+        if (ruta == null) {
+            return;
+        }
+
+        CargadorNivel cargador = new CargadorTxt();
+        cargarResultado(cargador.cargar(ruta));
+    }
+
+    private void cargarResultado(ResultadoCarga resultado) {
         Casilla[][] t    = resultado.getGrilla();
         int filas        = resultado.getFilas();
         int columnas     = resultado.getColumnas();
@@ -40,18 +66,20 @@ public class NivelSwing {
         }
 
         validarNivel(t, cajas, resultado.getJugadorY(), resultado.getJugadorX());
-        this.tablero               = t;
-        this.cajasIniciales        = copiarCajas(cajas);
-        this.filaJugadorInicial    = resultado.getJugadorY();
+        this.tablero = t;
+        this.cajasIniciales = copiarListaCajas(resultado.getCajas());
+        this.filaJugadorInicial = resultado.getJugadorY();
         this.columnaJugadorInicial = resultado.getJugadorX();
     }
 
     public Casilla[][] getTablero() { return tablero; }
 
-    public boolean[][] crearCajas() { return copiarCajas(cajasIniciales); }
-
-    public int getFilaJugadorInicial()    { return filaJugadorInicial; }
-    public int getColumnaJugadorInicial() { return columnaJugadorInicial; }
+    public Tablero crearTablero() {
+        return new Tablero(
+                tablero,
+                copiarListaCajas(cajasIniciales),
+                new Jugador(columnaJugadorInicial, filaJugadorInicial));
+    }
 
     private void validarNivel(
             Casilla[][] tablero,
@@ -96,10 +124,22 @@ public class NivelSwing {
         return fila >= 0 && fila < tablero.length && columna >= 0 && columna < tablero[0].length;
     }
 
-    private boolean[][] copiarCajas(boolean[][] origen) {
-        boolean[][] copia = new boolean[origen.length][origen[0].length];
+    private List<Caja> crearListaCajas(boolean[][] origen) {
+        List<Caja> cajas = new ArrayList<>();
         for (int fila = 0; fila < origen.length; fila++) {
-            System.arraycopy(origen[fila], 0, copia[fila], 0, origen[fila].length);
+            for (int columna = 0; columna < origen[fila].length; columna++) {
+                if (origen[fila][columna]) {
+                    cajas.add(new Caja(columna, fila, new modelo.strategy.ComportamientoNormal()));
+                }
+            }
+        }
+        return cajas;
+    }
+
+    private List<Caja> copiarListaCajas(List<Caja> origen) {
+        List<Caja> copia = new ArrayList<>();
+        for (Caja caja : origen) {
+            copia.add(caja.copiar());
         }
         return copia;
     }

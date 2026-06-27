@@ -3,6 +3,9 @@ package modelo.cargador;
 import modelo.*;
 import modelo.entidad.Caja;
 import modelo.fabrica.*;
+import modelo.strategy.ComportamientoFragil;
+import modelo.strategy.ComportamientoLlave;
+import modelo.strategy.ComportamientoNormal;
 
 
 import java.io.*;
@@ -16,10 +19,13 @@ import java.util.*;
  *   'H' = Hielo
  *   'P' = Portal (se linkean en pares por orden de aparición)
  *   'C' = Cerrojo
+ *   'X' = Pared cerrada por cerrojo
  *   '@' = Jugador sobre piso
  *   '+' = Jugador sobre meta
  *   '$' = Caja normal sobre piso
  *   '*' = Caja normal sobre meta
+ *   'F' = Caja fragil sobre piso
+ *   'L' = Caja llave sobre piso
  */
 public class CargadorTxt implements CargadorNivel {
 
@@ -34,10 +40,13 @@ public class CargadorTxt implements CargadorNivel {
         CREADORES.put('C', new CreadorCasilla() {
             public Casilla crearCasilla() { return new Cerrojo(); }
         });
+        CREADORES.put('X', new CreadorParedCerrojo());
         CREADORES.put('@', new CreadorPiso());
         CREADORES.put('+', new CreadorMeta());
         CREADORES.put('$', new CreadorPiso());
         CREADORES.put('*', new CreadorMeta());
+        CREADORES.put('F', new CreadorPiso());
+        CREADORES.put('L', new CreadorPiso());
     }
 
     @Override
@@ -90,7 +99,13 @@ public class CargadorTxt implements CargadorNivel {
                 break;
             case '$':
             case '*':
-                cajas.add(new Caja(col, fila));
+                cajas.add(new Caja(col, fila, new ComportamientoNormal()));
+                break;
+            case 'F':
+                cajas.add(new Caja(col, fila, new ComportamientoFragil(3)));
+                break;
+            case 'L':
+                cajas.add(new Caja(col, fila, new ComportamientoLlave()));
                 break;
         }
     }
@@ -118,8 +133,8 @@ public class CargadorTxt implements CargadorNivel {
         for (int i = 0; i + 1 < portales.size(); i += 2) {
             Portal a = portales.get(i);
             Portal b = portales.get(i + 1);
-            a.setExtremo_opuesto(b);
-            b.setExtremo_opuesto(a);
+            a.setExtremoOpuesto(b);
+            b.setExtremoOpuesto(a);
         }
     }
 }

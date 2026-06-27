@@ -14,6 +14,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,9 +31,13 @@ import modelo.Casilla;
 import modelo.Cerrojo;
 import modelo.Hielo;
 import modelo.Meta;
+import modelo.Movimiento;
 import modelo.Pared;
-import modelo.Piso;
-import modelo.Portal;
+import modelo.entidad.Caja;
+import modelo.entidad.Tablero;
+import modelo.strategy.ComportamientoCaja;
+import modelo.strategy.ComportamientoFragil;
+import modelo.strategy.ComportamientoLlave;
 
 public class PanelTablero extends JPanel {
     private static final long serialVersionUID = 1L;
@@ -43,14 +48,14 @@ public class PanelTablero extends JPanel {
     private static final int DURACION_ANIMACION_MS = 140;
 
     private final NivelSwing nivel;
-    private final Casilla[][] tablero;
-    private final int filas;
-    private final int columnas;
+    private Casilla[][] tablero;
+    private int filas;
+    private int columnas;
     private final EstadoListener estadoListener;
-    private final int totalCajas;
+    private int totalCajas;
     private final Map<String, BufferedImage> sprites = new HashMap<>();
 
-    private boolean[][] cajas;
+    private Tablero modeloTablero;
     private int filaJugador;
     private int columnaJugador;
     private int movimientos;
@@ -64,11 +69,9 @@ public class PanelTablero extends JPanel {
 
     public PanelTablero(NivelSwing nivel, EstadoListener estadoListener) {
         this.nivel = nivel;
-        tablero = nivel.getTablero();
-        filas = tablero.length;
-        columnas = tablero[0].length;
+        actualizarDatosNivel();
         this.estadoListener = estadoListener;
-        totalCajas = contarCajas(nivel.crearCajas());
+        totalCajas = contarCajasQueTrabajanConMeta(nivel.crearTablero());
 
         cargarSprites();
         setBackground(new Color(19, 25, 27));
@@ -100,9 +103,12 @@ public class PanelTablero extends JPanel {
     }
 
     public void reiniciar() {
-        cajas = nivel.crearCajas();
-        filaJugador = nivel.getFilaJugadorInicial();
-        columnaJugador = nivel.getColumnaJugadorInicial();
+        nivel.recargar();
+        actualizarDatosNivel();
+        modeloTablero = nivel.crearTablero();
+        totalCajas = contarCajasQueTrabajanConMeta(modeloTablero);
+        filaJugador = modeloTablero.getJugador().getY();
+        columnaJugador = modeloTablero.getJugador().getX();
         filaJugadorAnterior = filaJugador;
         columnaJugadorAnterior = columnaJugador;
         direccionFila = 1;
@@ -112,6 +118,12 @@ public class PanelTablero extends JPanel {
         ganado = false;
         notificarEstado();
         repaint();
+    }
+
+    private void actualizarDatosNivel() {
+        tablero = nivel.getTablero();
+        filas = tablero.length;
+        columnas = tablero[0].length;
     }
 
     private void configurarAnimacion() {
@@ -174,30 +186,23 @@ public class PanelTablero extends JPanel {
             return;
         }
 
-        int nuevaFila = filaJugador + cambioFila;
-        int nuevaColumna = columnaJugador + cambioColumna;
+        Movimiento movimiento = new Movimiento(cambioFila, cambioColumna);
         direccionFila = cambioFila;
         direccionColumna = cambioColumna;
 
-        if (!estaLibreParaJugador(nuevaFila, nuevaColumna, cambioFila, cambioColumna)) {
+        filaJugadorAnterior = filaJugador;
+        columnaJugadorAnterior = columnaJugador;
+
+        if (!modeloTablero.moverJugador(movimiento)) {
             repaint();
             return;
         }
 
-        if (hayCaja(nuevaFila, nuevaColumna)) {
-            moverCaja(nuevaFila, nuevaColumna, cambioFila, cambioColumna);
-        }
-
-        filaJugadorAnterior = filaJugador;
-        columnaJugadorAnterior = columnaJugador;
-        direccionFila = cambioFila;
-        direccionColumna = cambioColumna;
-        filaJugador = nuevaFila;
-        columnaJugador = nuevaColumna;
-        aplicarPortalSiCorresponde();
+        filaJugador = modeloTablero.getJugador().getY();
+        columnaJugador = modeloTablero.getJugador().getX();
         iniciarAnimacionMovimiento();
         movimientos++;
-        ganado = estaCompleto();
+        ganado = modeloTablero.estaGanado();
         notificarEstado();
         repaint();
 
@@ -214,6 +219,8 @@ public class PanelTablero extends JPanel {
     private void cargarSprites() {
         cargarSprite("caja");
         cargarSprite("caja_en_meta");
+        cargarSprite("caja_fragil");
+        cargarSprite("caja_llave");
         cargarSprite("jugador");
         cargarSprite("pared");
         cargarSprite("piso");
@@ -262,89 +269,27 @@ public class PanelTablero extends JPanel {
         return true;
     }
 
-    private boolean estaLibreParaJugador(int fila, int columna, int cambioFila, int cambioColumna) {
-        if (!puedeOcuparse(fila, columna)) {
-            return false;
-        }
-
-        if (!hayCaja(fila, columna)) {
-            return true;
-        }
-
-        int filaDestinoCaja = fila + cambioFila;
-        int columnaDestinoCaja = columna + cambioColumna;
-        return puedeOcuparse(filaDestinoCaja, columnaDestinoCaja) && !hayCaja(filaDestinoCaja, columnaDestinoCaja);
-    }
-
-    private void moverCaja(int fila, int columna, int cambioFila, int cambioColumna) {
-        cajas[fila][columna] = false;
-        cajas[fila + cambioFila][columna + cambioColumna] = true;
-    }
-
-    private boolean puedeOcuparse(int fila, int columna) {
-        return estaEnTablero(fila, columna) && tablero[fila][columna].esTransitable();
-    }
-
-    private boolean hayCaja(int fila, int columna) {
-        return estaEnTablero(fila, columna) && cajas[fila][columna];
-    }
-
-    private boolean estaEnTablero(int fila, int columna) {
-        return fila >= 0 && fila < filas && columna >= 0 && columna < columnas;
-    }
-
-    private void aplicarPortalSiCorresponde() {
-        Casilla casilla = tablero[filaJugador][columnaJugador];
-        if (!(casilla instanceof Portal)) {
-            return;
-        }
-
-        Portal portal = (Portal) casilla;
-        Portal extremoOpuesto = portal.getExtremo_opuesto();
-        if (extremoOpuesto == null) {
-            return;
-        }
-
-        for (int fila = 0; fila < filas; fila++) {
-            for (int columna = 0; columna < columnas; columna++) {
-                if (tablero[fila][columna] == extremoOpuesto && puedeOcuparse(fila, columna) && !hayCaja(fila, columna)) {
-                    filaJugador = fila;
-                    columnaJugador = columna;
-                    return;
-                }
-            }
-        }
-    }
-
-    private boolean estaCompleto() {
-        return totalCajas > 0 && contarCajasEnMeta() == totalCajas;
-    }
-
     private void notificarEstado() {
         if (estadoListener != null) {
             estadoListener.actualizarEstado(movimientos, contarCajasEnMeta(), totalCajas, ganado);
         }
     }
 
-    private int contarCajas(boolean[][] cajasParaContar) {
+    private int contarCajasEnMeta() {
         int cantidad = 0;
-        for (int fila = 0; fila < cajasParaContar.length; fila++) {
-            for (int columna = 0; columna < cajasParaContar[fila].length; columna++) {
-                if (cajasParaContar[fila][columna]) {
-                    cantidad++;
-                }
+        for (Caja caja : modeloTablero.getCajas()) {
+            if (caja.trabajaConMeta() && tablero[caja.getY()][caja.getX()].esMeta()) {
+                cantidad++;
             }
         }
         return cantidad;
     }
 
-    private int contarCajasEnMeta() {
+    private int contarCajasQueTrabajanConMeta(Tablero tableroParaContar) {
         int cantidad = 0;
-        for (int fila = 0; fila < filas; fila++) {
-            for (int columna = 0; columna < columnas; columna++) {
-                if (cajas[fila][columna] && tablero[fila][columna] instanceof Meta) {
-                    cantidad++;
-                }
+        for (Caja caja : tableroParaContar.getCajas()) {
+            if (caja.trabajaConMeta()) {
+                cantidad++;
             }
         }
         return cantidad;
@@ -366,7 +311,7 @@ public class PanelTablero extends JPanel {
         int x = obtenerXCasilla(columna);
         int y = obtenerYCasilla(fila);
 
-        if (casilla instanceof Pared) {
+        if (casilla instanceof Pared || !casilla.esTransitable()) {
             pintarPared(g2, x, y);
             return;
         }
@@ -392,17 +337,17 @@ public class PanelTablero extends JPanel {
     }
 
     private void pintarDetalle(Graphics2D g2, Casilla casilla, int x, int y) {
-        if (casilla instanceof Meta) {
+        if (casilla.esMeta()) {
             pintarMeta(g2, x, y);
             return;
         }
 
-        if (casilla instanceof Hielo) {
+        if (casilla.esResbaladiza()) {
             pintarHielo(g2, x, y);
             return;
         }
 
-        if (casilla instanceof Portal) {
+        if (casilla.esPortal()) {
             pintarPortal(g2, x, y);
             return;
         }
@@ -494,22 +439,23 @@ public class PanelTablero extends JPanel {
     }
 
     private void pintarCajas(Graphics2D g2) {
-        for (int fila = 0; fila < filas; fila++) {
-            for (int columna = 0; columna < columnas; columna++) {
-                if (cajas[fila][columna]) {
-                    pintarCaja(g2, fila, columna);
-                }
+        for (Caja caja : modeloTablero.getCajas()) {
+            if (!caja.estaRota()) {
+                pintarCaja(g2, caja);
             }
         }
     }
 
-    private void pintarCaja(Graphics2D g2, int fila, int columna) {
+    private void pintarCaja(Graphics2D g2, Caja caja) {
+        int fila = caja.getY();
+        int columna = caja.getX();
         int x = obtenerXCasilla(columna);
         int y = obtenerYCasilla(fila);
         int margenCaja = 9;
-        boolean enMeta = tablero[fila][columna] instanceof Meta;
+        boolean enMeta = tablero[fila][columna].esMeta();
+        String spriteCaja = obtenerSpriteCaja(caja, enMeta);
 
-        if (pintarSprite(g2, enMeta ? "caja_en_meta" : "caja", x, y, 0)) {
+        if (pintarSprite(g2, spriteCaja, x, y, 0)) {
             return;
         }
 
@@ -526,6 +472,27 @@ public class PanelTablero extends JPanel {
         g2.drawRoundRect(x + margenCaja, y + margenCaja, TAMANIO_CELDA - margenCaja * 2, TAMANIO_CELDA - margenCaja * 2, 10, 10);
         g2.drawLine(x + margenCaja + 7, y + margenCaja + 7, x + TAMANIO_CELDA - margenCaja - 8, y + TAMANIO_CELDA - margenCaja - 8);
         g2.drawLine(x + TAMANIO_CELDA - margenCaja - 8, y + margenCaja + 7, x + margenCaja + 7, y + TAMANIO_CELDA - margenCaja - 8);
+    }
+
+    private String obtenerSpriteCaja(Caja caja, boolean enMeta) {
+        ComportamientoCaja comportamiento = obtenerComportamientoCaja(caja);
+        if (comportamiento instanceof ComportamientoFragil) {
+            return "caja_fragil";
+        }
+        if (comportamiento instanceof ComportamientoLlave) {
+            return "caja_llave";
+        }
+        return enMeta ? "caja_en_meta" : "caja";
+    }
+
+    private ComportamientoCaja obtenerComportamientoCaja(Caja caja) {
+        try {
+            Field campo = Caja.class.getDeclaredField("comportamiento");
+            campo.setAccessible(true);
+            return (ComportamientoCaja) campo.get(caja);
+        } catch (ReflectiveOperationException exception) {
+            return null;
+        }
     }
 
     private void pintarJugador(Graphics2D g2) {

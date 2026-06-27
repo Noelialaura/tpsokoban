@@ -4,8 +4,17 @@ public class Pared implements Casilla{
 
 	@Override
 	public boolean esTransitable() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
+	@Override
+	public boolean esResbaladiza() {
+		return false;
+	}
+
+	@Override
+	public boolean esMeta() { return false; }
+
+	@Override
+	public boolean esPortal() { return false; }
 }

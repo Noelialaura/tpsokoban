@@ -1,18 +1,31 @@
 package modelo;
 
-public class Portal implements Casilla{
-	
-	private Portal extremo_opuesto;
+public class Portal implements Casilla {
+
+	private Casilla extremoOpuesto;
 	private char id;
 
 	@Override
 	public boolean esTransitable() {
-		// TODO Auto-generated method stub
 		return true;
 	}
-	
-	public Portal getExtremo_opuesto() {
-		return extremo_opuesto;
+
+	@Override
+	public boolean esResbaladiza() {
+		return false;
+	}
+
+	@Override
+	public boolean esMeta() {
+		return false;
+	}
+
+	@Override
+	public boolean esPortal() { return true; }
+
+	@Override
+	public Casilla obtenerDestinoPortal() {
+		return extremoOpuesto;
 	}
 	
 	public void setId(char id) {
@@ -23,7 +36,7 @@ public class Portal implements Casilla{
 		return id;	
 	}
 	
-	public void setExtremo_opuesto(Portal extremo_opuesto) {
-		this.extremo_opuesto = extremo_opuesto;
+	public void setExtremoOpuesto(Casilla extremoOpuesto) {
+		this.extremoOpuesto = extremoOpuesto;
 	}
 }

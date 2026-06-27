@@ -1,13 +1,37 @@
 package modelo;
 
+import modelo.entidad.Tablero;
+
 public class Meta implements Casilla{
 	
 	private boolean ocupada;
 
 	@Override
 	public boolean esTransitable() {
-		// TODO Auto-generated method stub
 		return true;
+	}
+
+	@Override
+	public boolean esResbaladiza() {
+		return false;
+	}
+
+	@Override
+	public boolean esMeta() {
+		return true;
+	}
+
+	@Override
+	public boolean esPortal() { return false; }
+
+	@Override
+	public void ocupar() {
+		ocupada = true;
+	}
+
+	@Override
+	public void desocupar() {
+		ocupada = false;
 	}
 	
 	public boolean estaOcupada() {

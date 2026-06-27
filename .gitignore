@@ -1,0 +1,24 @@
+# Compilados Java
+*.class
+out/
+bin/
+target/
+build/
+
+# Temporales del proyecto
+tmp/
+
+# macOS
+.DS_Store
+
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# Logs
+*.log

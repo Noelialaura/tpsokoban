@@ -4,8 +4,19 @@ public class Piso implements Casilla{
 
 	@Override
 	public boolean esTransitable() {
-		// TODO Auto-generated method stub
 		return true;
 	}
 
+	@Override
+	public boolean esResbaladiza() {
+		return false;
+	}
+
+	@Override
+	public boolean esMeta() {
+		return false;
+	}
+
+	@Override
+	public boolean esPortal() { return false; }
 }
