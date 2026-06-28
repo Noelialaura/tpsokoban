@@ -12,5 +12,7 @@ public interface Casilla {
 	default void ocupar() {};
 	default void desocupar() {};
 	default void activar(Tablero tablero) {};
+	default void desactivar(Tablero tablero) {};
 	default void abrir() {};
+	default void cerrar() {};
 }

@@ -20,8 +20,8 @@ public class Fuerza extends DecoradorJugador {
         Caja segundaCaja = tablero.obtenerCaja(filaDetras, columnaDetras);
 
         if (segundaCaja != null) {
-            
-            boolean segundaSeMovio = tablero.moverCaja(segundaCaja, movimiento);
+
+            boolean segundaSeMovio = segundaCaja.empujar(movimiento, tablero);
             if (!segundaSeMovio) {
                 return false; // bloqueado
             }

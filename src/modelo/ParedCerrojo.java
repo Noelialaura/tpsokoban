@@ -1,6 +1,9 @@
 package modelo;
 
-public class ParedCerrojo implements Casilla {
+import modelo.observer.EventoJuego;
+import modelo.observer.SuscriptorJuego;
+
+public class ParedCerrojo implements Casilla, SuscriptorJuego {
 	
 	private boolean transitable;
 
@@ -29,5 +32,20 @@ public class ParedCerrojo implements Casilla {
 	@Override
 	public void abrir() {
 		transitable = true;
+	}
+
+	@Override
+	public void cerrar() {
+		transitable = false;
+	}
+
+	@Override
+	public void actualizar(EventoJuego evento) {
+		if (evento == EventoJuego.CERROJO_ACTIVADO) {
+			abrir();
+		}
+		if (evento == EventoJuego.CERROJO_DESACTIVADO) {
+			cerrar();
+		}
 	}
 }

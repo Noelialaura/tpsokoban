@@ -97,7 +97,7 @@ public class PanelTablero extends JPanel {
         pintarFondoTablero(g2);
         for (int fila = 0; fila < filas; fila++) {
             for (int columna = 0; columna < columnas; columna++) {
-                pintarCasilla(g2, tablero[fila][columna], fila, columna);
+                pintarCasilla(g2, modeloTablero.obtenerCasilla(fila, columna), fila, columna);
             }
         }
 
@@ -282,7 +282,7 @@ public class PanelTablero extends JPanel {
     private int contarCajasEnMeta() {
         int cantidad = 0;
         for (Caja caja : modeloTablero.getCajas()) {
-            if (caja.trabajaConMeta() && tablero[caja.getY()][caja.getX()].esMeta()) {
+            if (caja.trabajaConMeta() && modeloTablero.obtenerCasilla(caja.getY(), caja.getX()).esMeta()) {
                 cantidad++;
             }
         }
@@ -456,7 +456,7 @@ public class PanelTablero extends JPanel {
         int x = obtenerXCasilla(columna);
         int y = obtenerYCasilla(fila);
         int margenCaja = 9;
-        boolean enMeta = tablero[fila][columna].esMeta();
+        boolean enMeta = modeloTablero.obtenerCasilla(fila, columna).esMeta();
         String spriteCaja = obtenerSpriteCaja(caja, enMeta);
 
         if (pintarSprite(g2, spriteCaja, x, y, 0)) {

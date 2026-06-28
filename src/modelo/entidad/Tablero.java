@@ -19,8 +19,6 @@ public class Tablero {
         this.habilidadActiva = jugador; 
     }
 
-    
-
     public void setHabilidad(IEntidad habilidad) {
         this.habilidadActiva = habilidad;
     }
@@ -28,8 +26,6 @@ public class Tablero {
     public IEntidad getHabilidadActiva() {
         return habilidadActiva;
     }
-
-    
 
     public int getFilas()    { return casillas.length; }
     public int getColumnas() { return casillas[0].length; }
@@ -72,7 +68,11 @@ public class Tablero {
     }
 
     private void moverCajaA(Caja caja, int nuevaFila, int nuevaColumna) {
-        obtenerCasilla(caja.getY(), caja.getX()).desocupar();
+        Casilla casillaAnterior = obtenerCasilla(caja.getY(), caja.getX());
+        if (!caja.trabajaConMeta()) {
+            casillaAnterior.desactivar(this);
+        }
+        casillaAnterior.desocupar();
         caja.moverA(nuevaFila, nuevaColumna);
         obtenerCasilla(nuevaFila, nuevaColumna).ocupar();
     }
@@ -90,9 +90,6 @@ public class Tablero {
             
             boolean cajaSeMovio = habilidadActiva.empujarCaja(caja, movimiento, this);
             if (!cajaSeMovio) return false;
-
-            
-            activarCasillaBajoCaja(caja);
         } else if (!puedeOcuparse(nuevaFila, nuevaColumna)) {
             return false;
         }
@@ -146,14 +143,6 @@ public class Tablero {
     public void activarCasillaBajoCaja(Caja caja) {
         Casilla casilla = obtenerCasilla(caja.getY(), caja.getX());
         casilla.activar(this);
-    }
-
-    public void abrirMurosCerrojo() {
-        for (int fila = 0; fila < getFilas(); fila++) {
-            for (int columna = 0; columna < getColumnas(); columna++) {
-                casillas[fila][columna].abrir();
-            }
-        }
     }
 
     public boolean estaGanado() {

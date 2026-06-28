@@ -59,6 +59,8 @@ public class CargadorTxt implements CargadorNivel {
         Casilla[][]  grilla     = new Casilla[filas][columnas];
         List<Caja>   cajas      = new ArrayList<>();
         List<Portal> portales   = new ArrayList<>();
+        List<Cerrojo> cerrojos  = new ArrayList<>();
+        List<ParedCerrojo> paredesCerrojo = new ArrayList<>();
         int[]        posJugador = { 0, 0 };
 
         for (int fila = 0; fila < filas; fila++) {
@@ -71,12 +73,19 @@ public class CargadorTxt implements CargadorNivel {
                 if (ch == 'P') {
                     portales.add((Portal) grilla[fila][col]);
                 }
+                if (ch == 'C') {
+                    cerrojos.add((Cerrojo) grilla[fila][col]);
+                }
+                if (ch == 'X') {
+                    paredesCerrojo.add((ParedCerrojo) grilla[fila][col]);
+                }
 
                 procesarEntidad(ch, col, fila, cajas, posJugador);
             }
         }
 
         linkearPortales(portales);
+        linkearCerrojos(cerrojos, paredesCerrojo);
 
         return new ResultadoCarga(grilla, posJugador[0], posJugador[1], cajas, filas, columnas);
     }
@@ -135,6 +144,14 @@ public class CargadorTxt implements CargadorNivel {
             Portal b = portales.get(i + 1);
             a.setExtremoOpuesto(b);
             b.setExtremoOpuesto(a);
+        }
+    }
+
+    private void linkearCerrojos(List<Cerrojo> cerrojos, List<ParedCerrojo> paredesCerrojo) {
+        for (Cerrojo cerrojo : cerrojos) {
+            for (ParedCerrojo paredCerrojo : paredesCerrojo) {
+                cerrojo.suscribir(paredCerrojo);
+            }
         }
     }
 }

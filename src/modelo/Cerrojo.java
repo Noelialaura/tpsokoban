@@ -1,10 +1,17 @@
 package modelo;
 
 import modelo.entidad.Tablero;
+import modelo.observer.EventoJuego;
+import modelo.observer.PublicadorJuego;
+import modelo.observer.SuscriptorJuego;
 
-public class Cerrojo implements Casilla {
+import java.util.ArrayList;
+import java.util.List;
+
+public class Cerrojo implements Casilla, PublicadorJuego {
 	
 	private boolean llaveIngresada;
+	private List<SuscriptorJuego> suscriptores = new ArrayList<>();
 
 	@Override
 	public boolean esTransitable() {
@@ -27,7 +34,30 @@ public class Cerrojo implements Casilla {
 	@Override
 	public void activar(Tablero tablero) {
 		llaveIngresada = true;
-		tablero.abrirMurosCerrojo();
+		notificar(EventoJuego.CERROJO_ACTIVADO);
+	}
+
+	@Override
+	public void desactivar(Tablero tablero) {
+		llaveIngresada = false;
+		notificar(EventoJuego.CERROJO_DESACTIVADO);
+	}
+
+	@Override
+	public void suscribir(SuscriptorJuego suscriptor) {
+		suscriptores.add(suscriptor);
+	}
+
+	@Override
+	public void desuscribir(SuscriptorJuego suscriptor) {
+		suscriptores.remove(suscriptor);
+	}
+
+	@Override
+	public void notificar(EventoJuego evento) {
+		for (SuscriptorJuego suscriptor : suscriptores) {
+			suscriptor.actualizar(evento);
+		}
 	}
 
 	public boolean llaveIngresada() {

@@ -41,6 +41,6 @@ public class Jugador implements IEntidad {
     
     @Override
     public boolean empujarCaja(Caja caja, Movimiento movimiento, Tablero tablero) {
-        return tablero.moverCaja(caja, movimiento);
+        return caja.empujar(movimiento, tablero);
     }
 }
