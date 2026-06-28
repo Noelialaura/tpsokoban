@@ -34,7 +34,11 @@ import modelo.Meta;
 import modelo.Movimiento;
 import modelo.Pared;
 import modelo.entidad.Caja;
+import modelo.decorador.Fuerza;
+import modelo.decorador.IEntidad;
+import modelo.entidad.Jugador;
 import modelo.entidad.Tablero;
+import modelo.decorador.Velocidad;
 import modelo.strategy.ComportamientoCaja;
 import modelo.strategy.ComportamientoFragil;
 import modelo.strategy.ComportamientoLlave;
@@ -619,6 +623,30 @@ public class PanelTablero extends JPanel {
 
     private int obtenerYCasilla(int fila) {
         return MARGEN + fila * obtenerTamanioCelda();
+    }
+
+    /**
+     * Aplica el Decorator correspondiente al jugador según la habilidad elegida.
+     * Velocidad  → el jugador avanza 2 casillas por movimiento.
+     * Fuerza     → el jugador puede empujar 2 cajas seguidas.
+     * Normal     → sin decorador, comportamiento base.
+     */
+    public void activarHabilidad(String habilidad, PanelHUD hud) {
+        Jugador jugador = modeloTablero.getJugador();
+        IEntidad entidad;
+        switch (habilidad) {
+            case "Velocidad":
+                entidad = new Velocidad(jugador);
+                break;
+            case "Fuerza":
+                entidad = new Fuerza(jugador);
+                break;
+            default:
+                entidad = jugador;
+                break;
+        }
+        modeloTablero.setHabilidad(entidad);
+        hud.actualizarHabilidad(habilidad);
     }
 
     public interface EstadoListener {

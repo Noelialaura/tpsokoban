@@ -1,25 +1,46 @@
 package modelo.entidad;
 
-public class Jugador {
-	private int x;
-	private int y;
-	private int skin;
+import modelo.Movimiento;
+import modelo.decorador.IEntidad;
 
-	public Jugador(int x, int y) {
-		this.x = x;
-		this.y = y;
-	}
 
-	public int getX() {
-		return x;
-	}
+public class Jugador implements IEntidad {
+    private static Jugador instance;
 
-	public int getY() {
-		return y;
-	}
+    private int x;
+    private int y;
 
-	public void mover(int x, int y) {
-		this.x = x;
-		this.y = y;
-	}
+    public Jugador(int x, int y) {
+        this.x = x;
+        this.y = y;
+        instance = this;
+    }
+
+    public static Jugador getInstance() {
+        return instance;
+    }
+
+    public int getX() { return x; }
+    public int getY() { return y; }
+
+    public void mover(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    
+    @Override
+    public void desplazarse(Movimiento movimiento, Tablero tablero) {
+        int nuevaFila    = movimiento.aplicarAFila(this.y);
+        int nuevaColumna = movimiento.aplicarAColumna(this.x);
+        if (tablero.puedeOcuparse(nuevaFila, nuevaColumna)) {
+            mover(nuevaColumna, nuevaFila);
+        }
+    }
+
+    
+    @Override
+    public boolean empujarCaja(Caja caja, Movimiento movimiento, Tablero tablero) {
+        return tablero.moverCaja(caja, movimiento);
+    }
 }

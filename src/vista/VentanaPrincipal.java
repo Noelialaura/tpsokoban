@@ -1,7 +1,6 @@
 package vista;
 
 import java.awt.BorderLayout;
-
 import javax.swing.JFrame;
 
 public class VentanaPrincipal extends JFrame {
@@ -20,11 +19,15 @@ public class VentanaPrincipal extends JFrame {
     }
 
     private void cargarComponentes(NivelSwing nivel) {
-        PanelHUD panelHUD = new PanelHUD();
+        PanelHUD     panelHUD     = new PanelHUD();
         PanelTablero panelTablero = new PanelTablero(nivel, panelHUD::actualizarEstado);
-        panelHUD.setAccionReiniciar(panelTablero::reiniciar);
 
-        add(panelHUD, BorderLayout.NORTH);
+        panelHUD.setAccionReiniciar(panelTablero::reiniciar);
+        panelHUD.setAccionNormal(   () -> panelTablero.activarHabilidad("Normal",    panelHUD));
+        panelHUD.setAccionVelocidad(() -> panelTablero.activarHabilidad("Velocidad", panelHUD));
+        panelHUD.setAccionFuerza(   () -> panelTablero.activarHabilidad("Fuerza",    panelHUD));
+
+        add(panelHUD,     BorderLayout.NORTH);
         add(panelTablero, BorderLayout.CENTER);
         pack();
         setMinimumSize(getSize());

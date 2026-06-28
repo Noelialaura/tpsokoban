@@ -23,7 +23,11 @@ public class PanelHUD extends JPanel {
     private final TarjetaDato tarjetaMovimientos;
     private final TarjetaDato tarjetaCajas;
     private final TarjetaDato tarjetaEstado;
+    private final TarjetaDato tarjetaHabilidad;
     private final JButton reiniciar;
+    private final JButton btnVelocidad;
+    private final JButton btnFuerza;
+    private final JButton btnNormal;
 
     public PanelHUD() {
         setLayout(new BorderLayout(18, 0));
@@ -31,23 +35,32 @@ public class PanelHUD extends JPanel {
         setBorder(BorderFactory.createEmptyBorder(12, 16, 12, 16));
 
         JPanel encabezado = crearEncabezado();
-        JPanel metricas = crearMetricas();
-        JPanel acciones = crearAcciones();
+        JPanel metricas   = crearMetricas();
+        JPanel acciones   = crearAcciones();
 
         tarjetaMovimientos = new TarjetaDato("Movimientos", "0");
-        tarjetaCajas = new TarjetaDato("Cajas", "0/0");
-        tarjetaEstado = new TarjetaDato("Estado", "Jugando");
-        reiniciar = crearBoton("Reiniciar");
+        tarjetaCajas       = new TarjetaDato("Cajas",       "0/0");
+        tarjetaEstado      = new TarjetaDato("Estado",      "Jugando");
+        tarjetaHabilidad   = new TarjetaDato("Habilidad",   "Normal");
+
+        reiniciar    = crearBoton("Reiniciar",  new Color(241, 202, 115), new Color(196, 139, 62));
+        btnNormal    = crearBoton("Normal",     new Color(160, 174, 160), new Color(100, 120, 100));
+        btnVelocidad = crearBoton("⚡ Velocidad", new Color(100, 180, 255), new Color(40, 100, 200));
+        btnFuerza    = crearBoton("💪 Fuerza",   new Color(255, 130, 100), new Color(190, 60, 40));
 
         metricas.add(tarjetaMovimientos);
         metricas.add(tarjetaCajas);
         metricas.add(tarjetaEstado);
+        metricas.add(tarjetaHabilidad);
 
+        acciones.add(btnNormal);
+        acciones.add(btnVelocidad);
+        acciones.add(btnFuerza);
         acciones.add(reiniciar);
 
         add(encabezado, BorderLayout.WEST);
-        add(metricas, BorderLayout.CENTER);
-        add(acciones, BorderLayout.EAST);
+        add(metricas,   BorderLayout.CENTER);
+        add(acciones,   BorderLayout.EAST);
     }
 
     @Override
@@ -56,7 +69,6 @@ public class PanelHUD extends JPanel {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setPaint(new GradientPaint(0, 0, new Color(23, 31, 35), getWidth(), getHeight(), new Color(44, 57, 50)));
         g2.fillRect(0, 0, getWidth(), getHeight());
-
         g2.setColor(new Color(255, 255, 255, 30));
         g2.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
         g2.setColor(new Color(0, 0, 0, 60));
@@ -72,19 +84,23 @@ public class PanelHUD extends JPanel {
         tarjetaEstado.setDestacado(ganado);
     }
 
-    public void setAccionReiniciar(Runnable accionReiniciar) {
-        reiniciar.addActionListener(event -> accionReiniciar.run());
+    public void actualizarHabilidad(String nombreHabilidad) {
+        tarjetaHabilidad.setValor(nombreHabilidad);
     }
+
+    public void setAccionReiniciar(Runnable accion)   { reiniciar.addActionListener(e -> accion.run()); }
+    public void setAccionVelocidad(Runnable accion)   { btnVelocidad.addActionListener(e -> accion.run()); }
+    public void setAccionFuerza(Runnable accion)      { btnFuerza.addActionListener(e -> accion.run()); }
+    public void setAccionNormal(Runnable accion)      { btnNormal.addActionListener(e -> accion.run()); }
+
+    // ── builders ─────────────────────────────────────────────────────────────
 
     private JPanel crearEncabezado() {
         JPanel panel = new JPanel(new GridLayout(2, 1, 0, 1));
         panel.setOpaque(false);
         panel.setPreferredSize(new Dimension(148, 48));
-
-        JLabel titulo = crearEtiqueta("Sokoban", Font.BOLD, 20, new Color(245, 241, 225));
-        JLabel subtitulo = crearEtiqueta("Nivel demo", Font.PLAIN, 12, new Color(181, 194, 181));
-        panel.add(titulo);
-        panel.add(subtitulo);
+        panel.add(crearEtiqueta("Sokoban",    Font.BOLD,  20, new Color(245, 241, 225)));
+        panel.add(crearEtiqueta("Nivel demo", Font.PLAIN, 12, new Color(181, 194, 181)));
         return panel;
     }
 
@@ -95,7 +111,7 @@ public class PanelHUD extends JPanel {
     }
 
     private JPanel crearAcciones() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         panel.setOpaque(false);
         return panel;
     }
@@ -107,17 +123,17 @@ public class PanelHUD extends JPanel {
         return etiqueta;
     }
 
-    private JButton crearBoton(String texto) {
+    private JButton crearBoton(String texto, Color colorArriba, Color colorAbajo) {
+        Color ca = colorArriba, cb = colorAbajo;
         JButton boton = new JButton(texto) {
             private static final long serialVersionUID = 1L;
-
             @Override
             protected void paintComponent(Graphics graphics) {
                 Graphics2D g2 = (Graphics2D) graphics.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setPaint(new GradientPaint(0, 0, new Color(241, 202, 115), 0, getHeight(), new Color(196, 139, 62)));
+                g2.setPaint(new GradientPaint(0, 0, ca, 0, getHeight(), cb));
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
-                g2.setColor(new Color(255, 239, 184, 160));
+                g2.setColor(new Color(255, 239, 184, 100));
                 g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 12, 12);
                 g2.dispose();
                 super.paintComponent(graphics);
@@ -127,13 +143,15 @@ public class PanelHUD extends JPanel {
         boton.setContentAreaFilled(false);
         boton.setBorderPainted(false);
         boton.setFocusPainted(false);
-        boton.setForeground(new Color(34, 35, 31));
-        boton.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 13));
-        boton.setMargin(new Insets(0, 5, 0, 5));
-        boton.setMinimumSize(new Dimension(142, 38));
-        boton.setPreferredSize(new Dimension(142, 38));
+        boton.setForeground(new Color(255, 255, 255));
+        boton.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
+        boton.setMargin(new Insets(0, 4, 0, 4));
+        boton.setMinimumSize(new Dimension(110, 36));
+        boton.setPreferredSize(new Dimension(110, 36));
         return boton;
     }
+
+    // ── TarjetaDato ───────────────────────────────────────────────────────────
 
     private static class TarjetaDato extends JPanel {
         private static final long serialVersionUID = 1L;
@@ -160,14 +178,11 @@ public class PanelHUD extends JPanel {
             add(valor);
         }
 
-        void setValor(String nuevoValor) {
-            valor.setText(nuevoValor);
-            repaint();
-        }
+        void setValor(String nuevoValor) { valor.setText(nuevoValor); repaint(); }
 
-        void setDestacado(boolean destacado) {
-            this.destacado = destacado;
-            valor.setForeground(destacado ? new Color(143, 229, 144) : new Color(244, 239, 219));
+        void setDestacado(boolean d) {
+            this.destacado = d;
+            valor.setForeground(d ? new Color(143, 229, 144) : new Color(244, 239, 219));
             repaint();
         }
 
@@ -185,5 +200,4 @@ public class PanelHUD extends JPanel {
             super.paintComponent(graphics);
         }
     }
-
 }
