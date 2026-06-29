@@ -48,6 +48,7 @@ import modelo.observer.SuscriptorJuego;
 import modelo.strategy.ComportamientoCaja;
 import modelo.strategy.ComportamientoFragil;
 import modelo.strategy.ComportamientoLlave;
+import vista.estado.EstudianteContexto;
 import modelo.memento.Memento;
 import modelo.memento.Caretaker;
 
@@ -81,6 +82,9 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
     private Timer animacionMovimiento;
 
     private Caretaker caretaker;
+    
+    private final java.util.Set<String> casillasRotas = new java.util.HashSet<>();
+    private final Map<Caja, EstudianteContexto> contextos = new HashMap<>();
 
     public PanelTablero(NivelSwing nivel, EstadoListener estadoListener) {
         this.nivel = nivel;
@@ -113,6 +117,14 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
         }
 
         pintarCajas(g2);
+        for (String clave : casillasRotas) {
+            String[] partes = clave.split(",");
+            int fila    = Integer.parseInt(partes[0]);
+            int columna = Integer.parseInt(partes[1]);
+            int x = obtenerXCasilla(columna);
+            int y = obtenerYCasilla(fila);
+            pintarTextoSobreCasilla(g2, x, y, "Dejó la carrera");
+        }
         pintarJugador(g2);
         g2.dispose();
     }
@@ -133,6 +145,13 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
         animacionMovimiento.stop();
         movimientos = 0;
         ganado = false;
+        casillasRotas.clear();
+        contextos.clear();
+        for (Caja caja : modeloTablero.getCajas()) {
+            if (obtenerComportamientoCaja(caja) instanceof ComportamientoFragil) {
+                contextos.put(caja, new EstudianteContexto("caja_fragil"));
+            }
+        }
         // Restaurar sprites originales al reiniciar
         cargarSprite("jugador");
         cargarSprite("pared");
@@ -143,6 +162,7 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
         cargarSprite("caja_llave");
         cargarSprite("caja");
         cargarSprite("caja_fragil");
+        cargarSprite("portal");
         // Suscribirse al nuevo tablero como observador
         modeloTablero.suscribir(this);
         notificarEstado();
@@ -308,6 +328,7 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
         cargarSprite("febrerodestino");
         cargarSprite("estudiante");
         cargarSprite("estudiantetriste");
+        cargarSprite("ascensorGodio");
     }
 
     private void cargarSprite(String nombre) {
@@ -336,7 +357,7 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
         }
     }
 
-    private boolean pintarSprite(Graphics2D g2, String nombre, int x, int y, int margen) {
+    public boolean pintarSprite(Graphics2D g2, String nombre, int x, int y, int margen) {
         BufferedImage imagen = sprites.get(nombre);
         if (imagen == null) {
             return false;
@@ -568,12 +589,29 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
 
     private void pintarCajas(Graphics2D g2) {
         for (Caja caja : modeloTablero.getCajas()) {
-            if (!caja.estaRota()) {
+            EstudianteContexto ctx = contextos.get(caja);
+
+            if (ctx != null) {
+                if (caja.estaRota()) {
+                    if (ctx.esEstudiante()) {
+                        ctx.romperse(obtenerXCasilla(caja.getX()), obtenerYCasilla(caja.getY()));
+                        ctx.pintarRoto(g2, this);
+                    }
+                } else {
+                    boolean enMeta = modeloTablero
+                        .obtenerCasilla(caja.getY(), caja.getX()).esMeta();
+                    if (enMeta) ctx.irAMeta();
+                    int x = obtenerXCasilla(caja.getX());
+                    int y = obtenerYCasilla(caja.getY());
+                    ctx.pintar(g2, x, y, this);
+                }
+
+            } else if (!caja.estaRota()) {
                 pintarCaja(g2, caja);
             }
         }
     }
-
+    
     private void pintarCaja(Graphics2D g2, Caja caja) {
         int fila = caja.getY();
         int columna = caja.getX();
@@ -582,6 +620,15 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
         int margenCaja = 9;
         boolean enMeta = modeloTablero.obtenerCasilla(fila, columna).esMeta();
         String spriteCaja = obtenerSpriteCaja(caja, enMeta);
+        
+        if (pintarSprite(g2, spriteCaja, x, y, 0)) {
+            // Si es frágil y está en meta, superponemos el texto
+            ComportamientoCaja comp = obtenerComportamientoCaja(caja);
+            if (comp instanceof ComportamientoFragil && enMeta) {
+                pintarTextoSobreCasilla(g2, x, y, "Recursa la materia");
+            }
+            return;
+        }
 
         if (pintarSprite(g2, spriteCaja, x, y, 0)) {
             return;
@@ -834,7 +881,14 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
             swapSprite("meta",          "febrerodestino");
             swapSprite("caja",          "estudiante");
             swapSprite("caja_fragil",   "estudiantetriste");
+            swapSprite("portal", "ascensorGodio");
             repaint();
+        }
+        if (evento == EventoJuego.SKIN_EXAMEN) {
+            // ...
+            for (EstudianteContexto ctx : contextos.values()) {
+                ctx.activarSkinExamen("estudiantetriste");
+            }
         }
     }
 
@@ -866,5 +920,20 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
 
     public interface EstadoListener {
         void actualizarEstado(int movimientos, int cajasEnMeta, int totalCajas, boolean ganado);
+    }
+    
+    public void pintarTextoSobreCasilla(Graphics2D g2, int x, int y, String texto) {
+        g2.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 10));
+        java.awt.FontMetrics fm = g2.getFontMetrics();
+        int tw = fm.stringWidth(texto);
+        int tx = x + (TAMANIO_CELDA - tw) / 2;
+        int ty = y + TAMANIO_CELDA / 2 + fm.getAscent() / 2;
+
+        // sombra
+        g2.setColor(new Color(0, 0, 0, 180));
+        g2.drawString(texto, tx + 1, ty + 1);
+        // texto principal
+        g2.setColor(new Color(255, 80, 80));
+        g2.drawString(texto, tx, ty);
     }
 }
