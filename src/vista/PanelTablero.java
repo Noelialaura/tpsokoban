@@ -33,6 +33,7 @@ import modelo.Hielo;
 import modelo.Meta;
 import modelo.Movimiento;
 import modelo.Pared;
+import modelo.ParedCerrojo;
 import modelo.entidad.Caja;
 import modelo.decorador.Fuerza;
 import modelo.decorador.IEntidad;
@@ -227,6 +228,7 @@ public class PanelTablero extends JPanel {
         cargarSprite("caja_llave");
         cargarSprite("jugador");
         cargarSprite("pared");
+        cargarSprite("pared_cerrojo");
         cargarSprite("piso");
         cargarSprite("meta");
         cargarSprite("hielo");
@@ -315,6 +317,11 @@ public class PanelTablero extends JPanel {
         int x = obtenerXCasilla(columna);
         int y = obtenerYCasilla(fila);
 
+        if (casilla instanceof ParedCerrojo && !casilla.esTransitable()) {
+            pintarParedCerrojo(g2, x, y);
+            return;
+        }
+
         if (casilla instanceof Pared || !casilla.esTransitable()) {
             pintarPared(g2, x, y);
             return;
@@ -378,6 +385,15 @@ public class PanelTablero extends JPanel {
 
         g2.setColor(new Color(16, 21, 23, 90));
         g2.drawRoundRect(x + 1, y + 1, TAMANIO_CELDA - 2, TAMANIO_CELDA - 2, ARCO, ARCO);
+    }
+
+    private void pintarParedCerrojo(Graphics2D g2, int x, int y) {
+        if (pintarSpriteTerreno(g2, "pared_cerrojo", x, y)) {
+            return;
+        }
+
+        pintarPared(g2, x, y);
+        pintarCerrojo(g2, x, y);
     }
 
     private void pintarMeta(Graphics2D g2, int x, int y) {
