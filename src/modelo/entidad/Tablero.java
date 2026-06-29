@@ -2,6 +2,7 @@ package modelo.entidad;
 
 import modelo.decorador.*;
 import modelo.entidad.*;
+import modelo.memento.Memento;
 import modelo.Casilla;
 import modelo.Movimiento;
 import java.util.List;
@@ -153,5 +154,48 @@ public class Tablero {
             }
         }
         return true;
+    }
+    
+    public Memento guardar() {
+    	return new Memento(this.jugador, this.cajas);
+    }
+    
+    public void restaurar(modelo.memento.Memento memento) {
+        if (memento == null) return;
+
+        this.jugador.mover(memento.getPosX(), memento.getPosY());
+
+        List<modelo.memento.Memento.EstadoCaja> estados = memento.getEstadoCajas();
+        for (int i = 0; i < cajas.size(); i++) {
+            Caja cajaReal = cajas.get(i);
+            modelo.memento.Memento.EstadoCaja estado = estados.get(i);
+            
+            int cFila = estado.y;
+            int cColumna = estado.x;
+            
+            if (!estaDentro(cFila, cColumna) && estaDentro(cColumna, cFila)) {
+                int temporal = cFila;
+                cFila = cColumna;
+                cColumna = temporal;
+            }
+            
+            cajaReal.moverA(cFila, cColumna);
+            
+            if (estado.rota) {
+                cajaReal.romper();
+            }
+        }
+
+        for (int fila = 0; fila < getFilas(); fila++) {
+            for (int columna = 0; columna < getColumnas(); columna++) {
+                casillas[fila][columna].desocupar();
+            }
+        }
+        
+        for (Caja caja : cajas) {
+            if (!caja.estaRota() && estaDentro(caja.getY(), caja.getX())) {
+                obtenerCasilla(caja.getY(), caja.getX()).ocupar();
+            }
+        }
     }
 }

@@ -42,6 +42,8 @@ import modelo.decorador.Velocidad;
 import modelo.strategy.ComportamientoCaja;
 import modelo.strategy.ComportamientoFragil;
 import modelo.strategy.ComportamientoLlave;
+import modelo.memento.Memento;
+import modelo.memento.Caretaker;
 
 public class PanelTablero extends JPanel {
     private static final long serialVersionUID = 1L;
@@ -70,6 +72,8 @@ public class PanelTablero extends JPanel {
     private int direccionColumna;
     private long inicioAnimacion;
     private Timer animacionMovimiento;
+    
+    private Caretaker caretaker;
 
     public PanelTablero(NivelSwing nivel, EstadoListener estadoListener) {
         this.nivel = nivel;
@@ -111,6 +115,8 @@ public class PanelTablero extends JPanel {
         actualizarDatosNivel();
         modeloTablero = nivel.crearTablero();
         totalCajas = contarCajasQueTrabajanConMeta(modeloTablero);
+        caretaker = new Caretaker();
+        caretaker.guardarEstado(modeloTablero.guardar());;
         filaJugador = modeloTablero.getJugador().getY();
         columnaJugador = modeloTablero.getJugador().getX();
         filaJugadorAnterior = filaJugador;
@@ -152,7 +158,19 @@ public class PanelTablero extends JPanel {
         registrarMovimiento(inputMap, actionMap, KeyEvent.VK_S, "abajo-s", 1, 0);
         registrarMovimiento(inputMap, actionMap, KeyEvent.VK_A, "izquierda-a", 0, -1);
         registrarMovimiento(inputMap, actionMap, KeyEvent.VK_D, "derecha-d", 0, 1);
+        registrarDeshacer(inputMap, actionMap);
         registrarReinicio(inputMap, actionMap);
+    }
+    
+    private void registrarDeshacer(InputMap inputMap, ActionMap actionMap) {
+    	inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, 0), "deshacer");
+    	actionMap.put("deshacer", new AbstractAction() {
+            private static final long serialVersionUID = 1L;
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                deshacerMovimiento();
+            }
+        });
     }
 
     private void registrarMovimiento(
@@ -197,6 +215,10 @@ public class PanelTablero extends JPanel {
         filaJugadorAnterior = filaJugador;
         columnaJugadorAnterior = columnaJugador;
 
+        if (movimientos % 5 == 0) {
+            caretaker.guardarEstado(modeloTablero.guardar());
+        }
+
         if (!modeloTablero.moverJugador(movimiento)) {
             repaint();
             return;
@@ -206,12 +228,35 @@ public class PanelTablero extends JPanel {
         columnaJugador = modeloTablero.getJugador().getX();
         iniciarAnimacionMovimiento();
         movimientos++;
+        
         ganado = modeloTablero.estaGanado();
         notificarEstado();
         repaint();
 
         if (ganado) {
             JOptionPane.showMessageDialog(this, "Nivel completado en " + movimientos + " movimientos.");
+        }
+    }
+    
+    private void deshacerMovimiento() {
+        if (ganado || animacionMovimiento.isRunning()) {
+            return;
+        }
+
+        Memento estadoAnterior = caretaker.deshacer();
+        
+        if (estadoAnterior != null) {
+            modeloTablero.restaurar(estadoAnterior);
+            
+            movimientos = Math.max(0, movimientos - 5);
+            
+            filaJugador = modeloTablero.getJugador().getY();
+            columnaJugador = modeloTablero.getJugador().getX();
+            filaJugadorAnterior = filaJugador;
+            columnaJugadorAnterior = columnaJugador;
+            
+            notificarEstado();
+            repaint();
         }
     }
 
