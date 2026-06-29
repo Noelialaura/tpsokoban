@@ -6,6 +6,7 @@ import modelo.fabrica.*;
 import modelo.strategy.ComportamientoFragil;
 import modelo.strategy.ComportamientoLlave;
 import modelo.strategy.ComportamientoNormal;
+import modelo.PisoExamen;
 import modelo.PisoPocionVelocidad;
 import modelo.PisoPocionFuerza;
 
@@ -30,6 +31,7 @@ import java.util.*;
  *   'L' = Caja llave sobre piso
  *   'Y' = Poción de Velocidad (el jugador avanza 2 casillas al recogerla)
  *   'U' = Poción de Fuerza (el jugador puede empujar 2 cajas al recogerla)
+ *   'E' = Examen (al pisarla, la skin del jugador cambia a godiozzz)
  */
 public class CargadorTxt implements CargadorNivel {
 
@@ -56,6 +58,9 @@ public class CargadorTxt implements CargadorNivel {
         });
         CREADORES.put('U', new CreadorCasilla() {
             public Casilla crearCasilla() { return new PisoPocionFuerza(); }
+        });
+        CREADORES.put('E', new CreadorCasilla() {
+            public Casilla crearCasilla() { return new PisoExamen(); }
         });
     }
 

@@ -5,15 +5,21 @@ import modelo.entidad.*;
 import modelo.memento.Memento;
 import modelo.Casilla;
 import modelo.Movimiento;
+import modelo.PisoExamen;
 import modelo.PisoPocionFuerza;
 import modelo.PisoPocionVelocidad;
+import modelo.observer.EventoJuego;
+import modelo.observer.PublicadorJuego;
+import modelo.observer.SuscriptorJuego;
+import java.util.ArrayList;
 import java.util.List;
 
-public class Tablero {
+public class Tablero implements PublicadorJuego {
     private Casilla[][] casillas;
     private List<Caja> cajas;
     private Jugador jugador;
     private IEntidad habilidadActiva;
+    private final List<SuscriptorJuego> suscriptores = new ArrayList<>();
 
     public Tablero(Casilla[][] casillas, List<Caja> cajas, Jugador jugador) {
         this.casillas = casillas;
@@ -24,6 +30,24 @@ public class Tablero {
 
     public void setHabilidad(IEntidad habilidad) {
         this.habilidadActiva = habilidad;
+    }
+
+    // ── PublicadorJuego ──────────────────────────────────────────────────────
+    @Override
+    public void suscribir(SuscriptorJuego suscriptor) {
+        suscriptores.add(suscriptor);
+    }
+
+    @Override
+    public void desuscribir(SuscriptorJuego suscriptor) {
+        suscriptores.remove(suscriptor);
+    }
+
+    @Override
+    public void notificar(EventoJuego evento) {
+        for (SuscriptorJuego s : suscriptores) {
+            s.actualizar(evento);
+        }
     }
 
     public IEntidad getHabilidadActiva() {
@@ -108,6 +132,7 @@ public class Tablero {
 
         aplicarPortalAJugador();
         recogerPocionBajoJugador();
+        recogerExamenBajoJugador();
         return true;
     }
 
@@ -137,6 +162,21 @@ public class Tablero {
     /** Devuelve el nombre legible de la habilidad activa (puede ser acumulada, ej: "Velocidad + Fuerza"). */
     public String getNombreHabilidadActiva() {
         return habilidadActiva.getNombreHabilidad();
+    }
+
+    /**
+     * Si el jugador está sobre una casilla PisoExamen no recogida,
+     * la marca como recogida y notifica SKIN_EXAMEN a los suscriptores.
+     */
+    private void recogerExamenBajoJugador() {
+        Casilla casilla = obtenerCasilla(jugador.getY(), jugador.getX());
+        if (casilla instanceof PisoExamen) {
+            PisoExamen examen = (PisoExamen) casilla;
+            if (!examen.fueRecogido()) {
+                examen.recoger();
+                notificar(EventoJuego.SKIN_EXAMEN);
+            }
+        }
     }
 
     private void aplicarPortalAJugador() {

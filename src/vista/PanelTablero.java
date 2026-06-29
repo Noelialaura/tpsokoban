@@ -34,6 +34,7 @@ import modelo.Meta;
 import modelo.Movimiento;
 import modelo.Pared;
 import modelo.ParedCerrojo;
+import modelo.PisoExamen;
 import modelo.PisoPocionFuerza;
 import modelo.PisoPocionVelocidad;
 import modelo.entidad.Caja;
@@ -42,13 +43,15 @@ import modelo.decorador.IEntidad;
 import modelo.entidad.Jugador;
 import modelo.entidad.Tablero;
 import modelo.decorador.Velocidad;
+import modelo.observer.EventoJuego;
+import modelo.observer.SuscriptorJuego;
 import modelo.strategy.ComportamientoCaja;
 import modelo.strategy.ComportamientoFragil;
 import modelo.strategy.ComportamientoLlave;
 import modelo.memento.Memento;
 import modelo.memento.Caretaker;
 
-public class PanelTablero extends JPanel {
+public class PanelTablero extends JPanel implements SuscriptorJuego {
     private static final long serialVersionUID = 1L;
     private static final int TAMANIO_CELDA = 64;
     private static final int MARGEN = 14;
@@ -130,6 +133,18 @@ public class PanelTablero extends JPanel {
         animacionMovimiento.stop();
         movimientos = 0;
         ganado = false;
+        // Restaurar sprites originales al reiniciar
+        cargarSprite("jugador");
+        cargarSprite("pared");
+        cargarSprite("pared_cerrojo");
+        cargarSprite("piso");
+        cargarSprite("meta");
+        cargarSprite("cerrojo");
+        cargarSprite("caja_llave");
+        cargarSprite("caja");
+        cargarSprite("caja_fragil");
+        // Suscribirse al nuevo tablero como observador
+        modeloTablero.suscribir(this);
         notificarEstado();
         repaint();
     }
@@ -283,6 +298,16 @@ public class PanelTablero extends JPanel {
         cargarSprite("hielo");
         cargarSprite("portal");
         cargarSprite("cerrojo");
+        cargarSprite("examen");
+        cargarSprite("godiozzz");
+        cargarSpriteDesdeArchivo("uade",           "assets/imagenes/sprites/uade.jpg");
+        cargarSpriteDesdeArchivo("uademuro",       "assets/imagenes/sprites/uademuro.jpg");
+        cargarSprite("pisofacu");
+        cargarSprite("qrllave");
+        cargarSprite("molinete");
+        cargarSprite("febrerodestino");
+        cargarSprite("estudiante");
+        cargarSprite("estudiantetriste");
     }
 
     private void cargarSprite(String nombre) {
@@ -290,6 +315,21 @@ public class PanelTablero extends JPanel {
             BufferedImage imagen = ImageIO.read(new File("assets/imagenes/sprites/" + nombre + ".png"));
             if (imagen != null) {
                 sprites.put(nombre, imagen);
+            }
+        } catch (IOException exception) {
+            // Si falta un asset, la vista conserva el dibujo Java2D como respaldo.
+        }
+    }
+
+    /**
+     * Carga un sprite desde una ruta completa (permite extensiones distintas a .png)
+     * y lo almacena bajo la clave indicada.
+     */
+    private void cargarSpriteDesdeArchivo(String clave, String rutaCompleta) {
+        try {
+            BufferedImage imagen = ImageIO.read(new File(rutaCompleta));
+            if (imagen != null) {
+                sprites.put(clave, imagen);
             }
         } catch (IOException exception) {
             // Si falta un asset, la vista conserva el dibujo Java2D como respaldo.
@@ -423,7 +463,11 @@ public class PanelTablero extends JPanel {
         }
 
         if (casilla.esPocion()) {
-            pintarPocion(g2, casilla, x, y);
+            if (casilla instanceof PisoExamen) {
+                pintarExamen(g2, x, y);
+            } else {
+                pintarPocion(g2, casilla, x, y);
+            }
             return;
         }
 
@@ -739,6 +783,67 @@ public class PanelTablero extends JPanel {
         java.awt.FontMetrics fm = g2.getFontMetrics();
         int tw = fm.stringWidth(icono);
         g2.drawString(icono, centroX - tw / 2, centroY + fm.getAscent() / 2 - 1);
+    }
+
+    /**
+     * Dibuja el sprite del examen sobre la casilla.
+     * Si no hay sprite cargado, muestra un ícono de texto como fallback.
+     */
+    private void pintarExamen(Graphics2D g2, int x, int y) {
+        if (pintarSprite(g2, "examen", x, y, 4)) {
+            return;
+        }
+        // Fallback: dibujo Java2D
+        int centroX = x + TAMANIO_CELDA / 2;
+        int centroY = y + TAMANIO_CELDA / 2;
+        g2.setColor(new Color(255, 230, 80, 60));
+        g2.fillOval(centroX - 22, centroY - 22, 44, 44);
+        g2.setPaint(new GradientPaint(x, y, new Color(255, 210, 50), x, y + TAMANIO_CELDA, new Color(200, 140, 0)));
+        g2.fillOval(centroX - 14, centroY - 14, 28, 28);
+        g2.setColor(new Color(255, 255, 200, 200));
+        g2.setStroke(new BasicStroke(2f));
+        g2.drawOval(centroX - 14, centroY - 14, 28, 28);
+        g2.setFont(new java.awt.Font(java.awt.Font.SANS_SERIF, java.awt.Font.BOLD, 14));
+        g2.setColor(java.awt.Color.WHITE);
+        java.awt.FontMetrics fm = g2.getFontMetrics();
+        String icono = "📄";
+        int tw = fm.stringWidth(icono);
+        g2.drawString(icono, centroX - tw / 2, centroY + fm.getAscent() / 2 - 1);
+    }
+
+    /**
+     * Reacción al evento Observer. Cuando el jugador pisa la casilla E,
+     * el tablero notifica SKIN_EXAMEN y aquí se reemplazan todos los sprites estéticos:
+     * - jugador       → godiozzz.png
+     * - pared         → uade.jpg
+     * - pared_cerrojo → uademuro.jpg
+     * - piso          → pisofacu.png
+     * - caja_llave    → qrllave.png
+     * - cerrojo       → molinete.png  (destino de caja llave)
+     * - meta          → febrerodestino.png  (destino de cajas normales)
+     */
+    @Override
+    public void actualizar(EventoJuego evento) {
+        if (evento == EventoJuego.SKIN_EXAMEN) {
+            swapSprite("jugador",       "godiozzz");
+            swapSprite("pared",         "uade");
+            swapSprite("pared_cerrojo", "uademuro");
+            swapSprite("piso",          "pisofacu");
+            swapSprite("caja_llave",    "qrllave");
+            swapSprite("cerrojo",       "molinete");
+            swapSprite("meta",          "febrerodestino");
+            swapSprite("caja",          "estudiante");
+            swapSprite("caja_fragil",   "estudiantetriste");
+            repaint();
+        }
+    }
+
+    /** Reemplaza el sprite bajo la clave {@code destino} con la imagen almacenada en {@code origen}. */
+    private void swapSprite(String destino, String origen) {
+        BufferedImage img = sprites.get(origen);
+        if (img != null) {
+            sprites.put(destino, img);
+        }
     }
 
     /**

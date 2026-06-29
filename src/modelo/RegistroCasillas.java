@@ -1,6 +1,7 @@
 package modelo;
 
 import modelo.fabrica.*;
+import modelo.fabrica.CreadorExamen;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,6 +20,7 @@ public class RegistroCasillas {
 		REGISTRO.put('C', new CreadorCerrojo());
 		REGISTRO.put('.', new CreadorPiso());
 		REGISTRO.put('J', new CreadorPiso()); // El jugador se coloca sobre un piso
+		REGISTRO.put('E', new CreadorExamen()); // Casilla Examen: cambia la skin del jugador
 	}
 
 	private static CreadorCasilla obtenerCreador(char simbolo) {
