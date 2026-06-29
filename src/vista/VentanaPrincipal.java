@@ -23,9 +23,8 @@ public class VentanaPrincipal extends JFrame {
         PanelTablero panelTablero = new PanelTablero(nivel, panelHUD::actualizarEstado);
 
         panelHUD.setAccionReiniciar(panelTablero::reiniciar);
-        panelHUD.setAccionNormal(   () -> panelTablero.activarHabilidad("Normal",    panelHUD));
-        panelHUD.setAccionVelocidad(() -> panelTablero.activarHabilidad("Velocidad", panelHUD));
-        panelHUD.setAccionFuerza(   () -> panelTablero.activarHabilidad("Fuerza",    panelHUD));
+        panelHUD.setAccionNormal(   () -> panelTablero.activarHabilidad("Normal", panelHUD));
+        panelTablero.setHabilidadListener(panelHUD::actualizarHabilidad);
 
         add(panelHUD,     BorderLayout.NORTH);
         add(panelTablero, BorderLayout.CENTER);

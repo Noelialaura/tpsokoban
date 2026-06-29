@@ -25,8 +25,6 @@ public class PanelHUD extends JPanel {
     private final TarjetaDato tarjetaEstado;
     private final TarjetaDato tarjetaHabilidad;
     private final JButton reiniciar;
-    private final JButton btnVelocidad;
-    private final JButton btnFuerza;
     private final JButton btnNormal;
 
     public PanelHUD() {
@@ -45,8 +43,6 @@ public class PanelHUD extends JPanel {
 
         reiniciar    = crearBoton("Reiniciar",  new Color(241, 202, 115), new Color(196, 139, 62));
         btnNormal    = crearBoton("Normal",     new Color(160, 174, 160), new Color(100, 120, 100));
-        btnVelocidad = crearBoton("⚡ Velocidad", new Color(100, 180, 255), new Color(40, 100, 200));
-        btnFuerza    = crearBoton("💪 Fuerza",   new Color(255, 130, 100), new Color(190, 60, 40));
 
         metricas.add(tarjetaMovimientos);
         metricas.add(tarjetaCajas);
@@ -54,8 +50,6 @@ public class PanelHUD extends JPanel {
         metricas.add(tarjetaHabilidad);
 
         acciones.add(btnNormal);
-        acciones.add(btnVelocidad);
-        acciones.add(btnFuerza);
         acciones.add(reiniciar);
 
         add(encabezado, BorderLayout.WEST);
@@ -89,8 +83,6 @@ public class PanelHUD extends JPanel {
     }
 
     public void setAccionReiniciar(Runnable accion)   { reiniciar.addActionListener(e -> accion.run()); }
-    public void setAccionVelocidad(Runnable accion)   { btnVelocidad.addActionListener(e -> accion.run()); }
-    public void setAccionFuerza(Runnable accion)      { btnFuerza.addActionListener(e -> accion.run()); }
     public void setAccionNormal(Runnable accion)      { btnNormal.addActionListener(e -> accion.run()); }
 
     // ── builders ─────────────────────────────────────────────────────────────

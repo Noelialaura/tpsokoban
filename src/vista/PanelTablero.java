@@ -33,6 +33,8 @@ import modelo.Hielo;
 import modelo.Meta;
 import modelo.Movimiento;
 import modelo.Pared;
+import modelo.PisoPocionFuerza;
+import modelo.PisoPocionVelocidad;
 import modelo.entidad.Caja;
 import modelo.decorador.Fuerza;
 import modelo.decorador.IEntidad;
@@ -56,6 +58,7 @@ public class PanelTablero extends JPanel {
     private int filas;
     private int columnas;
     private final EstadoListener estadoListener;
+    private java.util.function.Consumer<String> habilidadListener;
     private int totalCajas;
     private final Map<String, BufferedImage> sprites = new HashMap<>();
 
@@ -208,6 +211,7 @@ public class PanelTablero extends JPanel {
         movimientos++;
         ganado = modeloTablero.estaGanado();
         notificarEstado();
+        notificarHabilidad();
         repaint();
 
         if (ganado) {
@@ -277,6 +281,16 @@ public class PanelTablero extends JPanel {
         if (estadoListener != null) {
             estadoListener.actualizarEstado(movimientos, contarCajasEnMeta(), totalCajas, ganado);
         }
+    }
+
+    private void notificarHabilidad() {
+        if (habilidadListener != null) {
+            habilidadListener.accept(modeloTablero.getNombreHabilidadActiva());
+        }
+    }
+
+    public void setHabilidadListener(java.util.function.Consumer<String> listener) {
+        this.habilidadListener = listener;
     }
 
     private int contarCajasEnMeta() {
@@ -353,6 +367,11 @@ public class PanelTablero extends JPanel {
 
         if (casilla.esPortal()) {
             pintarPortal(g2, x, y);
+            return;
+        }
+
+        if (casilla.esPocion()) {
+            pintarPocion(g2, casilla, x, y);
             return;
         }
 
@@ -626,27 +645,57 @@ public class PanelTablero extends JPanel {
     }
 
     /**
+     * Dibuja una poción sobre la casilla.
+     * Azul (⚡) = Velocidad, Naranja (💪) = Fuerza.
+     */
+    private void pintarPocion(Graphics2D g2, Casilla casilla, int x, int y) {
+        int centroX = x + TAMANIO_CELDA / 2;
+        int centroY = y + TAMANIO_CELDA / 2;
+        boolean esVelocidad = casilla instanceof PisoPocionVelocidad;
+
+        Color colorGlow  = esVelocidad ? new Color(80, 160, 255, 60)  : new Color(255, 120, 40, 60);
+        Color colorArriba = esVelocidad ? new Color(100, 190, 255)     : new Color(255, 160, 60);
+        Color colorAbajo  = esVelocidad ? new Color(30,  100, 220)     : new Color(200,  70, 20);
+        Color colorBorde  = esVelocidad ? new Color(180, 220, 255, 200) : new Color(255, 210, 120, 200);
+        String icono      = esVelocidad ? "⚡" : "💪";
+
+        // halo exterior
+        g2.setColor(colorGlow);
+        g2.fillOval(centroX - 22, centroY - 22, 44, 44);
+
+        // círculo principal con gradiente
+        g2.setPaint(new GradientPaint(x, y, colorArriba, x, y + TAMANIO_CELDA, colorAbajo));
+        g2.fillOval(centroX - 14, centroY - 14, 28, 28);
+
+        // borde brillante
+        g2.setColor(colorBorde);
+        g2.setStroke(new BasicStroke(2f));
+        g2.drawOval(centroX - 14, centroY - 14, 28, 28);
+
+        // ícono de texto
+        g2.setFont(new java.awt.Font(java.awt.Font.SANS_SERIF, java.awt.Font.BOLD, 13));
+        g2.setColor(java.awt.Color.WHITE);
+        java.awt.FontMetrics fm = g2.getFontMetrics();
+        int tw = fm.stringWidth(icono);
+        g2.drawString(icono, centroX - tw / 2, centroY + fm.getAscent() / 2 - 1);
+    }
+
+    /**
      * Aplica el Decorator correspondiente al jugador según la habilidad elegida.
-     * Velocidad  → el jugador avanza 2 casillas por movimiento.
-     * Fuerza     → el jugador puede empujar 2 cajas seguidas.
-     * Normal     → sin decorador, comportamiento base.
+     * Normal → sin decorador, comportamiento base.
      */
     public void activarHabilidad(String habilidad, PanelHUD hud) {
         Jugador jugador = modeloTablero.getJugador();
         IEntidad entidad;
         switch (habilidad) {
-            case "Velocidad":
-                entidad = new Velocidad(jugador);
-                break;
-            case "Fuerza":
-                entidad = new Fuerza(jugador);
-                break;
             default:
                 entidad = jugador;
                 break;
         }
         modeloTablero.setHabilidad(entidad);
-        hud.actualizarHabilidad(habilidad);
+        String nombre = modeloTablero.getNombreHabilidadActiva();
+        hud.actualizarHabilidad(nombre);
+        notificarHabilidad();
     }
 
     public interface EstadoListener {

@@ -6,6 +6,8 @@ import modelo.fabrica.*;
 import modelo.strategy.ComportamientoFragil;
 import modelo.strategy.ComportamientoLlave;
 import modelo.strategy.ComportamientoNormal;
+import modelo.PisoPocionVelocidad;
+import modelo.PisoPocionFuerza;
 
 
 import java.io.*;
@@ -26,6 +28,8 @@ import java.util.*;
  *   '*' = Caja normal sobre meta
  *   'F' = Caja fragil sobre piso
  *   'L' = Caja llave sobre piso
+ *   'Y' = Poción de Velocidad (el jugador avanza 2 casillas al recogerla)
+ *   'U' = Poción de Fuerza (el jugador puede empujar 2 cajas al recogerla)
  */
 public class CargadorTxt implements CargadorNivel {
 
@@ -47,6 +51,12 @@ public class CargadorTxt implements CargadorNivel {
         CREADORES.put('*', new CreadorMeta());
         CREADORES.put('F', new CreadorPiso());
         CREADORES.put('L', new CreadorPiso());
+        CREADORES.put('Y', new CreadorCasilla() {
+            public Casilla crearCasilla() { return new PisoPocionVelocidad(); }
+        });
+        CREADORES.put('U', new CreadorCasilla() {
+            public Casilla crearCasilla() { return new PisoPocionFuerza(); }
+        });
     }
 
     @Override

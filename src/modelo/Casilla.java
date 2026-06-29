@@ -15,4 +15,6 @@ public interface Casilla {
 	default void desactivar(Tablero tablero) {};
 	default void abrir() {};
 	default void cerrar() {};
+	default boolean esPocion() { return false; };
+	default String getTipoPocion() { return null; };
 }

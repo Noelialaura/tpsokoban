@@ -4,6 +4,8 @@ import modelo.decorador.*;
 import modelo.entidad.*;
 import modelo.Casilla;
 import modelo.Movimiento;
+import modelo.PisoPocionFuerza;
+import modelo.PisoPocionVelocidad;
 import java.util.List;
 
 public class Tablero {
@@ -104,7 +106,36 @@ public class Tablero {
         }
 
         aplicarPortalAJugador();
+        recogerPocionBajoJugador();
         return true;
+    }
+
+    /**
+     * Si el jugador quedó sobre una casilla con poción no recogida,
+     * la marca como recogida y apila el decorador correspondiente
+     * sobre la habilidad activa (permite combinaciones Velocidad + Fuerza).
+     */
+    private void recogerPocionBajoJugador() {
+        Casilla casilla = obtenerCasilla(jugador.getY(), jugador.getX());
+        if (!casilla.esPocion()) return;
+
+        String tipo = casilla.getTipoPocion();
+        if (casilla instanceof PisoPocionVelocidad) {
+            ((PisoPocionVelocidad) casilla).recoger();
+        } else if (casilla instanceof PisoPocionFuerza) {
+            ((PisoPocionFuerza) casilla).recoger();
+        }
+
+        if ("Velocidad".equals(tipo)) {
+            habilidadActiva = new Velocidad(habilidadActiva);
+        } else if ("Fuerza".equals(tipo)) {
+            habilidadActiva = new Fuerza(habilidadActiva);
+        }
+    }
+
+    /** Devuelve el nombre legible de la habilidad activa (puede ser acumulada, ej: "Velocidad + Fuerza"). */
+    public String getNombreHabilidadActiva() {
+        return habilidadActiva.getNombreHabilidad();
     }
 
     private void aplicarPortalAJugador() {
