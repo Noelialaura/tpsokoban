@@ -26,4 +26,10 @@ public class Velocidad extends DecoradorJugador {
         }
         
     }
+
+    @Override
+    public String getNombreHabilidad() {
+        String base = jugadorDecorado.getNombreHabilidad();
+        return "Normal".equals(base) ? "Velocidad" : base + " + Velocidad";
+    }
 }

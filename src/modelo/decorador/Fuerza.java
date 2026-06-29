@@ -30,4 +30,10 @@ public class Fuerza extends DecoradorJugador {
         
         return jugadorDecorado.empujarCaja(caja, movimiento, tablero);
     }
+
+    @Override
+    public String getNombreHabilidad() {
+        String base = jugadorDecorado.getNombreHabilidad();
+        return "Normal".equals(base) ? "Fuerza" : base + " + Fuerza";
+    }
 }
