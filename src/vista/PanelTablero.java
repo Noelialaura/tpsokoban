@@ -162,6 +162,7 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
         cargarSprite("caja_llave");
         cargarSprite("caja");
         cargarSprite("caja_fragil");
+        cargarSprite("caja_en_meta");
         cargarSprite("portal");
         // Suscribirse al nuevo tablero como observador
         modeloTablero.suscribir(this);
@@ -328,6 +329,7 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
         cargarSprite("febrerodestino");
         cargarSprite("estudiante");
         cargarSprite("estudiantetriste");
+        cargarSprite("estudiantemeta");
         cargarSprite("ascensorGodio");
     }
 
@@ -881,6 +883,7 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
             swapSprite("meta",          "febrerodestino");
             swapSprite("caja",          "estudiante");
             swapSprite("caja_fragil",   "estudiantetriste");
+            swapSprite("caja_en_meta",  "estudiantemeta");
             swapSprite("portal", "ascensorGodio");
             repaint();
         }
