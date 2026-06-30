@@ -8,6 +8,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
 import java.awt.RenderingHints;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.geom.AffineTransform;
@@ -25,6 +26,7 @@ import javax.swing.InputMap;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 import modelo.Casilla;
@@ -133,6 +135,7 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
         nivel.recargar();
         actualizarDatosNivel();
         modeloTablero = nivel.crearTablero();
+        ajustarPantallaAlNivel();
         totalCajas = contarCajasQueTrabajanConMeta(modeloTablero);
         caretaker = new Caretaker();
         caretaker.guardarEstado(modeloTablero.guardar());;
@@ -167,6 +170,18 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
         modeloTablero.suscribir(this);
         notificarEstado();
         repaint();
+    }
+
+    private void ajustarPantallaAlNivel() {
+        setPreferredSize(new Dimension(
+                columnas * TAMANIO_CELDA + MARGEN * 2,
+                filas * TAMANIO_CELDA + MARGEN * 2));
+        revalidate();
+
+        Window ventana = SwingUtilities.getWindowAncestor(this);
+        if (ventana != null) {
+            ventana.pack();
+        }
     }
 
     private void actualizarDatosNivel() {
@@ -274,8 +289,24 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
         repaint();
 
         if (ganado) {
-            JOptionPane.showMessageDialog(this, "Nivel completado en " + movimientos + " movimientos.");
+            avanzarNivel();
         }
+    }
+
+    private void avanzarNivel() {
+        int movimientosNivel = movimientos;
+        boolean haySiguienteNivel = nivel.avanzarNivel();
+
+        if (haySiguienteNivel) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Nivel completado en " + movimientosNivel + " movimientos. Pasando al nivel "
+                            + nivel.getNumeroNivelActual() + " de " + nivel.getTotalNiveles() + ".");
+            reiniciar();
+            return;
+        }
+
+        JOptionPane.showMessageDialog(this, "Juego finalizado en " + movimientosNivel + " movimientos.");
     }
 
     private void deshacerMovimiento() {

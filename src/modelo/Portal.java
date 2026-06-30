@@ -1,5 +1,7 @@
 package modelo;
 
+import modelo.builder.ConstructorNivel;
+
 public class Portal implements Casilla {
 
 	private Casilla extremoOpuesto;
@@ -38,5 +40,10 @@ public class Portal implements Casilla {
 	
 	public void setExtremoOpuesto(Casilla extremoOpuesto) {
 		this.extremoOpuesto = extremoOpuesto;
+	}
+
+	@Override
+	public void registrarEnConstructor(ConstructorNivel constructor) {
+		constructor.registrarPortal(this);
 	}
 }

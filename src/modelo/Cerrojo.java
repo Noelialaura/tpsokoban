@@ -1,6 +1,7 @@
 package modelo;
 
 import modelo.entidad.Tablero;
+import modelo.builder.ConstructorNivel;
 import modelo.observer.EventoJuego;
 import modelo.observer.PublicadorJuego;
 import modelo.observer.SuscriptorJuego;
@@ -66,5 +67,10 @@ public class Cerrojo implements Casilla, PublicadorJuego {
 	
 	public void setLlveIngresada(boolean llaveIngresada) {
 		this.llaveIngresada = llaveIngresada;
+	}
+
+	@Override
+	public void registrarEnConstructor(ConstructorNivel constructor) {
+		constructor.registrarCerrojo(this);
 	}
 }

@@ -1,5 +1,8 @@
 package modelo;
 
+import modelo.entidad.Tablero;
+import modelo.observer.EventoJuego;
+
 /**
  * Casilla de piso que contiene un examen ('E' en el .txt).
  * Al ser pisada por el jugador, se marca como recogida (el sprite desaparece)
@@ -35,4 +38,12 @@ public class PisoExamen implements Casilla {
 
     @Override
     public String getTipoPocion() { return recogido ? null : "Examen"; }
+
+    @Override
+    public void recoger(Tablero tablero) {
+        if (!recogido) {
+            recogido = true;
+            tablero.notificar(EventoJuego.SKIN_EXAMEN);
+        }
+    }
 }

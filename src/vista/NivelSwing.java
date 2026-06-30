@@ -7,8 +7,10 @@ import modelo.cargador.CargadorTxt;
 import modelo.entidad.Caja;
 import modelo.entidad.Jugador;
 import modelo.entidad.Tablero;
+import modelo.nivel.GestorNiveles;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class NivelSwing {
@@ -17,6 +19,7 @@ public class NivelSwing {
     private List<Caja> cajasIniciales;
     private int filaJugadorInicial;
     private int columnaJugadorInicial;
+    private GestorNiveles gestorNiveles;
 
     /** Constructor original (hardcodeado / demo). */
     public NivelSwing(
@@ -25,6 +28,7 @@ public class NivelSwing {
             int filaJugadorInicial,
             int columnaJugadorInicial) {
         this.ruta = null;
+        this.gestorNiveles = null;
         validarNivel(tablero, cajasIniciales, filaJugadorInicial, columnaJugadorInicial);
         this.tablero = tablero;
         this.cajasIniciales = crearListaCajas(cajasIniciales);
@@ -38,12 +42,44 @@ public class NivelSwing {
      */
     public NivelSwing(ResultadoCarga resultado) {
         this.ruta = null;
+        this.gestorNiveles = null;
         cargarResultado(resultado);
     }
 
     public NivelSwing(String ruta) {
         this.ruta = ruta;
+        this.gestorNiveles = new GestorNiveles(Arrays.asList(ruta));
         recargar();
+    }
+
+    public NivelSwing(List<String> rutas) {
+        this.gestorNiveles = new GestorNiveles(rutas);
+        this.ruta = gestorNiveles.getRutaActual();
+        recargar();
+    }
+
+    public NivelSwing(String... rutas) {
+        this(Arrays.asList(rutas));
+    }
+
+    public boolean avanzarNivel() {
+        if (gestorNiveles == null) {
+            return false;
+        }
+        boolean puedeJugar = gestorNiveles.avanzarNivel();
+        ruta = gestorNiveles.getRutaActual();
+        if (puedeJugar) {
+            recargar();
+        }
+        return puedeJugar;
+    }
+
+    public int getNumeroNivelActual() {
+        return gestorNiveles == null ? 1 : gestorNiveles.getNumeroNivelActual();
+    }
+
+    public int getTotalNiveles() {
+        return gestorNiveles == null ? 1 : gestorNiveles.getTotalNiveles();
     }
 
     public void recargar() {

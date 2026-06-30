@@ -1,11 +1,9 @@
 package modelo.cargador;
 
 import modelo.*;
-import modelo.entidad.Caja;
+import modelo.builder.ConstructorNivel;
+import modelo.builder.DirectorNivel;
 import modelo.fabrica.*;
-import modelo.strategy.ComportamientoFragil;
-import modelo.strategy.ComportamientoLlave;
-import modelo.strategy.ComportamientoNormal;
 import modelo.PisoExamen;
 import modelo.PisoPocionVelocidad;
 import modelo.PisoPocionFuerza;
@@ -68,70 +66,18 @@ public class CargadorTxt implements CargadorNivel {
     public ResultadoCarga cargar(String ruta) {
         List<String> lineas = leerLineas(ruta);
 
-        int filas    = lineas.size();
-        int columnas = lineas.stream().mapToInt(String::length).max().orElse(0);
-
-        Casilla[][]  grilla     = new Casilla[filas][columnas];
-        List<Caja>   cajas      = new ArrayList<>();
-        List<Portal> portales   = new ArrayList<>();
-        List<Cerrojo> cerrojos  = new ArrayList<>();
-        List<ParedCerrojo> paredesCerrojo = new ArrayList<>();
-        int[]        posJugador = { 0, 0 };
-
-        for (int fila = 0; fila < filas; fila++) {
-            String linea = lineas.get(fila);
-            for (int col = 0; col < columnas; col++) {
-                char ch = col < linea.length() ? linea.charAt(col) : ' ';
-
-                grilla[fila][col] = crearCasilla(ch);
-
-                if (ch == 'P') {
-                    portales.add((Portal) grilla[fila][col]);
-                }
-                if (ch == 'C') {
-                    cerrojos.add((Cerrojo) grilla[fila][col]);
-                }
-                if (ch == 'X') {
-                    paredesCerrojo.add((ParedCerrojo) grilla[fila][col]);
-                }
-
-                procesarEntidad(ch, col, fila, cajas, posJugador);
-            }
-        }
-
-        linkearPortales(portales);
-        linkearCerrojos(cerrojos, paredesCerrojo);
-
-        return new ResultadoCarga(grilla, posJugador[0], posJugador[1], cajas, filas, columnas);
+        ConstructorNivel builder = new ConstructorNivel();
+        DirectorNivel director = new DirectorNivel(builder);
+        director.construirDesdeLineas(lineas, this::obtenerCreador);
+        return builder.construir();
     }
 
-    private Casilla crearCasilla(char ch) {
+    private CreadorCasilla obtenerCreador(char ch) {
         CreadorCasilla creador = CREADORES.get(ch);
         if (creador == null) {
             throw new IllegalArgumentException("Carácter desconocido en el nivel: '" + ch + "'");
         }
-        return creador.crearCasilla();
-    }
-
-    private void procesarEntidad(char ch, int col, int fila,
-                                 List<Caja> cajas, int[] posJugador) {
-        switch (ch) {
-            case '@':
-            case '+':
-                posJugador[0] = col;
-                posJugador[1] = fila;
-                break;
-            case '$':
-            case '*':
-                cajas.add(new Caja(col, fila, new ComportamientoNormal()));
-                break;
-            case 'F':
-                cajas.add(new Caja(col, fila, new ComportamientoFragil(3)));
-                break;
-            case 'L':
-                cajas.add(new Caja(col, fila, new ComportamientoLlave()));
-                break;
-        }
+        return creador;
     }
 
     private List<String> leerLineas(String ruta) {
@@ -153,20 +99,4 @@ public class CargadorTxt implements CargadorNivel {
         return lineas;
     }
 
-    private void linkearPortales(List<Portal> portales) {
-        for (int i = 0; i + 1 < portales.size(); i += 2) {
-            Portal a = portales.get(i);
-            Portal b = portales.get(i + 1);
-            a.setExtremoOpuesto(b);
-            b.setExtremoOpuesto(a);
-        }
-    }
-
-    private void linkearCerrojos(List<Cerrojo> cerrojos, List<ParedCerrojo> paredesCerrojo) {
-        for (Cerrojo cerrojo : cerrojos) {
-            for (ParedCerrojo paredCerrojo : paredesCerrojo) {
-                cerrojo.suscribir(paredCerrojo);
-            }
-        }
-    }
 }

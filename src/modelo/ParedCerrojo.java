@@ -1,5 +1,6 @@
 package modelo;
 
+import modelo.builder.ConstructorNivel;
 import modelo.observer.EventoJuego;
 import modelo.observer.SuscriptorJuego;
 
@@ -47,5 +48,10 @@ public class ParedCerrojo implements Casilla, SuscriptorJuego {
 		if (evento == EventoJuego.CERROJO_DESACTIVADO) {
 			cerrar();
 		}
+	}
+
+	@Override
+	public void registrarEnConstructor(ConstructorNivel constructor) {
+		constructor.registrarParedCerrojo(this);
 	}
 }

@@ -1,6 +1,7 @@
 package modelo;
 
 import modelo.entidad.Tablero;
+import modelo.builder.ConstructorNivel;
 
 public interface Casilla {
 	
@@ -17,4 +18,6 @@ public interface Casilla {
 	default void cerrar() {};
 	default boolean esPocion() { return false; };
 	default String getTipoPocion() { return null; };
+	default void registrarEnConstructor(ConstructorNivel constructor) {};
+	default void recoger(Tablero tablero) {};
 }
