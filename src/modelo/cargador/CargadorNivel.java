@@ -1,8 +1,8 @@
 package modelo.cargador;
 
-import modelo.ResultadoCarga;
+import modelo.entidad.Tablero;
 
 
 public interface CargadorNivel {
-    ResultadoCarga cargar(String ruta);
+    Tablero cargar(String ruta);
 }

@@ -17,4 +17,7 @@ public class Pared implements Casilla{
 
 	@Override
 	public boolean esPortal() { return false; }
+
+	@Override
+	public boolean esPared() { return true; }
 }

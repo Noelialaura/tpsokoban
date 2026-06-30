@@ -37,6 +37,9 @@ public class PisoExamen implements Casilla {
     public boolean esPocion() { return !recogido; }
 
     @Override
+    public boolean esExamen() { return !recogido; }
+
+    @Override
     public String getTipoPocion() { return recogido ? null : "Examen"; }
 
     @Override

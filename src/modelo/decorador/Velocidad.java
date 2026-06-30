@@ -17,7 +17,7 @@ public class Velocidad extends DecoradorJugador {
         jugadorDecorado.desplazarse(movimiento, tablero);
 
         
-        Jugador jugador = Jugador.getInstance();
+        Jugador jugador = tablero.getJugador();
         int segundaFila    = movimiento.aplicarAFila(jugador.getY());
         int segundaColumna = movimiento.aplicarAColumna(jugador.getX());
 

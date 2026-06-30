@@ -15,9 +15,9 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
@@ -29,27 +29,13 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
+import controlador.Controlador;
 import modelo.Casilla;
-import modelo.Cerrojo;
-import modelo.Hielo;
-import modelo.Meta;
 import modelo.Movimiento;
-import modelo.Pared;
-import modelo.ParedCerrojo;
-import modelo.PisoExamen;
-import modelo.PisoPocionFuerza;
-import modelo.PisoPocionVelocidad;
 import modelo.entidad.Caja;
-import modelo.decorador.Fuerza;
-import modelo.decorador.IEntidad;
-import modelo.entidad.Jugador;
-import modelo.entidad.Tablero;
-import modelo.decorador.Velocidad;
 import modelo.observer.EventoJuego;
 import modelo.observer.SuscriptorJuego;
 import modelo.strategy.ComportamientoCaja;
-import modelo.strategy.ComportamientoFragil;
-import modelo.strategy.ComportamientoLlave;
 import vista.estado.EstudianteContexto;
 import modelo.memento.Memento;
 import modelo.memento.Caretaker;
@@ -61,9 +47,44 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
     private static final int ARCO = 10;
     private static final int SOLAPE_TERRENO = 3;
     private static final int DURACION_ANIMACION_MS = 140;
+    private static final String[] SPRITES_BASE = {
+            "caja",
+            "caja_en_meta",
+            "caja_fragil",
+            "caja_llave",
+            "jugador",
+            "pared",
+            "pared_cerrojo",
+            "piso",
+            "meta",
+            "hielo",
+            "portal",
+            "cerrojo",
+            "examen",
+            "godiozzz",
+            "pisofacu",
+            "qrllave",
+            "molinete",
+            "febrerodestino",
+            "estudiante",
+            "estudiantetriste",
+            "ascensorGodio"
+    };
+    private static final String[][] SPRITES_EXAMEN = {
+            {"jugador", "godiozzz"},
+            {"pared", "uade"},
+            {"pared_cerrojo", "uademuro"},
+            {"piso", "pisofacu"},
+            {"caja_llave", "qrllave"},
+            {"cerrojo", "molinete"},
+            {"meta", "febrerodestino"},
+            {"caja", "estudiante"},
+            {"caja_fragil", "estudiantetriste"},
+            {"portal", "ascensorGodio"}
+    };
 
     private final NivelSwing nivel;
-    private Casilla[][] tablero;
+    private final Controlador controlador = Controlador.getInstance();
     private int filas;
     private int columnas;
     private final EstadoListener estadoListener;
@@ -71,7 +92,6 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
     private int totalCajas;
     private final Map<String, BufferedImage> sprites = new HashMap<>();
 
-    private Tablero modeloTablero;
     private int filaJugador;
     private int columnaJugador;
     private int movimientos;
@@ -85,14 +105,14 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
 
     private Caretaker caretaker;
     
-    private final java.util.Set<String> casillasRotas = new java.util.HashSet<>();
+    private final Set<String> casillasRotas = new java.util.HashSet<>();
     private final Map<Caja, EstudianteContexto> contextos = new HashMap<>();
 
     public PanelTablero(NivelSwing nivel, EstadoListener estadoListener) {
         this.nivel = nivel;
         actualizarDatosNivel();
         this.estadoListener = estadoListener;
-        totalCajas = contarCajasQueTrabajanConMeta(nivel.crearTablero());
+        totalCajas = contarCajasQueTrabajanConMeta();
 
         cargarSprites();
         setBackground(new Color(19, 25, 27));
@@ -112,13 +132,22 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         pintarFondoTablero(g2);
+        pintarCasillas(g2);
+        pintarCajas(g2);
+        pintarCasillasRotas(g2);
+        pintarJugador(g2);
+        g2.dispose();
+    }
+
+    private void pintarCasillas(Graphics2D g2) {
         for (int fila = 0; fila < filas; fila++) {
             for (int columna = 0; columna < columnas; columna++) {
-                pintarCasilla(g2, modeloTablero.obtenerCasilla(fila, columna), fila, columna);
+                pintarCasilla(g2, controlador.obtenerCasilla(fila, columna), fila, columna);
             }
         }
+    }
 
-        pintarCajas(g2);
+    private void pintarCasillasRotas(Graphics2D g2) {
         for (String clave : casillasRotas) {
             String[] partes = clave.split(",");
             int fila    = Integer.parseInt(partes[0]);
@@ -127,20 +156,16 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
             int y = obtenerYCasilla(fila);
             pintarTextoSobreCasilla(g2, x, y, "Dejó la carrera");
         }
-        pintarJugador(g2);
-        g2.dispose();
     }
 
     public void reiniciar() {
         nivel.recargar();
         actualizarDatosNivel();
-        modeloTablero = nivel.crearTablero();
         ajustarPantallaAlNivel();
-        totalCajas = contarCajasQueTrabajanConMeta(modeloTablero);
+        totalCajas = contarCajasQueTrabajanConMeta();
         caretaker = new Caretaker();
-        caretaker.guardarEstado(modeloTablero.guardar());;
-        filaJugador = modeloTablero.getJugador().getY();
-        columnaJugador = modeloTablero.getJugador().getX();
+        caretaker.guardarEstado(controlador.guardar());
+        actualizarPosicionJugador();
         filaJugadorAnterior = filaJugador;
         columnaJugadorAnterior = columnaJugador;
         direccionFila = 1;
@@ -149,27 +174,20 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
         movimientos = 0;
         ganado = false;
         casillasRotas.clear();
+        crearContextosFragiles();
+        restaurarSpritesBase();
+        controlador.suscribir(this);
+        notificarEstado();
+        repaint();
+    }
+
+    private void crearContextosFragiles() {
         contextos.clear();
-        for (Caja caja : modeloTablero.getCajas()) {
-            if (obtenerComportamientoCaja(caja) instanceof ComportamientoFragil) {
+        for (Caja caja : controlador.obtenerCajas()) {
+            if (controlador.obtenerComportamientoCaja(caja).esFragil()) {
                 contextos.put(caja, new EstudianteContexto("caja_fragil"));
             }
         }
-        // Restaurar sprites originales al reiniciar
-        cargarSprite("jugador");
-        cargarSprite("pared");
-        cargarSprite("pared_cerrojo");
-        cargarSprite("piso");
-        cargarSprite("meta");
-        cargarSprite("cerrojo");
-        cargarSprite("caja_llave");
-        cargarSprite("caja");
-        cargarSprite("caja_fragil");
-        cargarSprite("portal");
-        // Suscribirse al nuevo tablero como observador
-        modeloTablero.suscribir(this);
-        notificarEstado();
-        repaint();
     }
 
     private void ajustarPantallaAlNivel() {
@@ -185,9 +203,8 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
     }
 
     private void actualizarDatosNivel() {
-        tablero = nivel.getTablero();
-        filas = tablero.length;
-        columnas = tablero[0].length;
+        filas = controlador.getFilasNivelActual();
+        columnas = controlador.getColumnasNivelActual();
     }
 
     private void configurarAnimacion() {
@@ -270,20 +287,19 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
         columnaJugadorAnterior = columnaJugador;
 
         if (movimientos % 5 == 0) {
-            caretaker.guardarEstado(modeloTablero.guardar());
+            caretaker.guardarEstado(controlador.guardar());
         }
 
-        if (!modeloTablero.moverJugador(movimiento)) {
+        if (!controlador.moverJugador(movimiento)) {
             repaint();
             return;
         }
 
-        filaJugador = modeloTablero.getJugador().getY();
-        columnaJugador = modeloTablero.getJugador().getX();
+        actualizarPosicionJugador();
         iniciarAnimacionMovimiento();
         movimientos++;
 
-        ganado = modeloTablero.estaGanado();
+        ganado = controlador.estaGanado();
         notificarEstado();
         notificarHabilidad();
         repaint();
@@ -301,7 +317,7 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
             JOptionPane.showMessageDialog(
                     this,
                     "Nivel completado en " + movimientosNivel + " movimientos. Pasando al nivel "
-                            + nivel.getNumeroNivelActual() + " de " + nivel.getTotalNiveles() + ".");
+                            + controlador.getNumeroNivelActual() + " de " + controlador.getTotalNiveles() + ".");
             reiniciar();
             return;
         }
@@ -317,12 +333,11 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
         Memento estadoAnterior = caretaker.deshacer();
 
         if (estadoAnterior != null) {
-            modeloTablero.restaurar(estadoAnterior);
+            controlador.restaurar(estadoAnterior);
 
             movimientos = Math.max(0, movimientos - 5);
 
-            filaJugador = modeloTablero.getJugador().getY();
-            columnaJugador = modeloTablero.getJugador().getX();
+            actualizarPosicionJugador();
             filaJugadorAnterior = filaJugador;
             columnaJugadorAnterior = columnaJugador;
 
@@ -336,30 +351,21 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
         animacionMovimiento.restart();
     }
 
+    private void actualizarPosicionJugador() {
+        filaJugador = controlador.obtenerFilaJugador();
+        columnaJugador = controlador.obtenerColumnaJugador();
+    }
+
     private void cargarSprites() {
-        cargarSprite("caja");
-        cargarSprite("caja_en_meta");
-        cargarSprite("caja_fragil");
-        cargarSprite("caja_llave");
-        cargarSprite("jugador");
-        cargarSprite("pared");
-        cargarSprite("pared_cerrojo");
-        cargarSprite("piso");
-        cargarSprite("meta");
-        cargarSprite("hielo");
-        cargarSprite("portal");
-        cargarSprite("cerrojo");
-        cargarSprite("examen");
-        cargarSprite("godiozzz");
+        restaurarSpritesBase();
         cargarSpriteDesdeArchivo("uade",           "assets/imagenes/sprites/uade.jpg");
         cargarSpriteDesdeArchivo("uademuro",       "assets/imagenes/sprites/uademuro.jpg");
-        cargarSprite("pisofacu");
-        cargarSprite("qrllave");
-        cargarSprite("molinete");
-        cargarSprite("febrerodestino");
-        cargarSprite("estudiante");
-        cargarSprite("estudiantetriste");
-        cargarSprite("ascensorGodio");
+    }
+
+    private void restaurarSpritesBase() {
+        for (String sprite : SPRITES_BASE) {
+            cargarSprite(sprite);
+        }
     }
 
     private void cargarSprite(String nombre) {
@@ -424,7 +430,7 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
 
     private void notificarHabilidad() {
         if (habilidadListener != null) {
-            habilidadListener.accept(modeloTablero.getNombreHabilidadActiva());
+            habilidadListener.accept(controlador.getNombreHabilidadActiva());
         }
     }
 
@@ -434,18 +440,18 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
 
     private int contarCajasEnMeta() {
         int cantidad = 0;
-        for (Caja caja : modeloTablero.getCajas()) {
-            if (caja.trabajaConMeta() && modeloTablero.obtenerCasilla(caja.getY(), caja.getX()).esMeta()) {
+        for (Caja caja : controlador.obtenerCajas()) {
+            if (controlador.cajaTrabajaConMeta(caja) && controlador.cajaEstaEnMeta(caja)) {
                 cantidad++;
             }
         }
         return cantidad;
     }
 
-    private int contarCajasQueTrabajanConMeta(Tablero tableroParaContar) {
+    private int contarCajasQueTrabajanConMeta() {
         int cantidad = 0;
-        for (Caja caja : tableroParaContar.getCajas()) {
-            if (caja.trabajaConMeta()) {
+        for (Caja caja : controlador.obtenerCajas()) {
+            if (controlador.cajaTrabajaConMeta(caja)) {
                 cantidad++;
             }
         }
@@ -468,12 +474,12 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
         int x = obtenerXCasilla(columna);
         int y = obtenerYCasilla(fila);
 
-        if (casilla instanceof ParedCerrojo && !casilla.esTransitable()) {
+        if (casilla.esParedCerrojo() && !casilla.esTransitable()) {
             pintarParedCerrojo(g2, x, y);
             return;
         }
 
-        if (casilla instanceof Pared || !casilla.esTransitable()) {
+        if (casilla.esPared() || !casilla.esTransitable()) {
             pintarPared(g2, x, y);
             return;
         }
@@ -515,7 +521,7 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
         }
 
         if (casilla.esPocion()) {
-            if (casilla instanceof PisoExamen) {
+            if (casilla.esExamen()) {
                 pintarExamen(g2, x, y);
             } else {
                 pintarPocion(g2, casilla, x, y);
@@ -523,7 +529,7 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
             return;
         }
 
-        if (casilla instanceof Cerrojo) {
+        if (casilla.esCerrojo()) {
             pintarCerrojo(g2, x, y);
         }
     }
@@ -619,25 +625,24 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
     }
 
     private void pintarCajas(Graphics2D g2) {
-        for (Caja caja : modeloTablero.getCajas()) {
+        for (Caja caja : controlador.obtenerCajas()) {
             EstudianteContexto ctx = contextos.get(caja);
 
             if (ctx != null) {
-                if (caja.estaRota()) {
+                if (controlador.cajaEstaRota(caja)) {
                     if (ctx.esEstudiante()) {
                         ctx.romperse(obtenerXCasilla(caja.getX()), obtenerYCasilla(caja.getY()));
                         ctx.pintarRoto(g2, this);
                     }
                 } else {
-                    boolean enMeta = modeloTablero
-                        .obtenerCasilla(caja.getY(), caja.getX()).esMeta();
+                    boolean enMeta = controlador.cajaEstaEnMeta(caja);
                     if (enMeta) ctx.irAMeta();
                     int x = obtenerXCasilla(caja.getX());
                     int y = obtenerYCasilla(caja.getY());
                     ctx.pintar(g2, x, y, this);
                 }
 
-            } else if (!caja.estaRota()) {
+            } else if (!controlador.cajaEstaRota(caja)) {
                 pintarCaja(g2, caja);
             }
         }
@@ -649,19 +654,14 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
         int x = obtenerXCasilla(columna);
         int y = obtenerYCasilla(fila);
         int margenCaja = 9;
-        boolean enMeta = modeloTablero.obtenerCasilla(fila, columna).esMeta();
+        boolean enMeta = controlador.cajaEstaEnMeta(caja);
         String spriteCaja = obtenerSpriteCaja(caja, enMeta);
         
         if (pintarSprite(g2, spriteCaja, x, y, 0)) {
-            // Si es frágil y está en meta, superponemos el texto
-            ComportamientoCaja comp = obtenerComportamientoCaja(caja);
-            if (comp instanceof ComportamientoFragil && enMeta) {
+            ComportamientoCaja comp = controlador.obtenerComportamientoCaja(caja);
+            if (comp.esFragil() && enMeta) {
                 pintarTextoSobreCasilla(g2, x, y, "Recursa la materia");
             }
-            return;
-        }
-
-        if (pintarSprite(g2, spriteCaja, x, y, 0)) {
             return;
         }
 
@@ -681,24 +681,14 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
     }
 
     private String obtenerSpriteCaja(Caja caja, boolean enMeta) {
-        ComportamientoCaja comportamiento = obtenerComportamientoCaja(caja);
-        if (comportamiento instanceof ComportamientoFragil) {
+        ComportamientoCaja comportamiento = controlador.obtenerComportamientoCaja(caja);
+        if (comportamiento.esFragil()) {
             return "caja_fragil";
         }
-        if (comportamiento instanceof ComportamientoLlave) {
+        if (comportamiento.esLlave()) {
             return "caja_llave";
         }
         return enMeta ? "caja_en_meta" : "caja";
-    }
-
-    private ComportamientoCaja obtenerComportamientoCaja(Caja caja) {
-        try {
-            Field campo = Caja.class.getDeclaredField("comportamiento");
-            campo.setAccessible(true);
-            return (ComportamientoCaja) campo.get(caja);
-        } catch (ReflectiveOperationException exception) {
-            return null;
-        }
     }
 
     private void pintarJugador(Graphics2D g2) {
@@ -834,7 +824,7 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
     private void pintarPocion(Graphics2D g2, Casilla casilla, int x, int y) {
         int centroX = x + TAMANIO_CELDA / 2;
         int centroY = y + TAMANIO_CELDA / 2;
-        boolean esVelocidad = casilla instanceof PisoPocionVelocidad;
+        boolean esVelocidad = casilla.esPocionVelocidad();
 
         Color colorGlow  = esVelocidad ? new Color(80, 160, 255, 60)  : new Color(255, 120, 40, 60);
         Color colorArriba = esVelocidad ? new Color(100, 190, 255)     : new Color(255, 160, 60);
@@ -903,23 +893,17 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
     @Override
     public void actualizar(EventoJuego evento) {
         if (evento == EventoJuego.SKIN_EXAMEN) {
-            swapSprite("jugador",       "godiozzz");
-            swapSprite("pared",         "uade");
-            swapSprite("pared_cerrojo", "uademuro");
-            swapSprite("piso",          "pisofacu");
-            swapSprite("caja_llave",    "qrllave");
-            swapSprite("cerrojo",       "molinete");
-            swapSprite("meta",          "febrerodestino");
-            swapSprite("caja",          "estudiante");
-            swapSprite("caja_fragil",   "estudiantetriste");
-            swapSprite("portal", "ascensorGodio");
+            aplicarSkinExamen();
             repaint();
         }
-        if (evento == EventoJuego.SKIN_EXAMEN) {
-            // ...
-            for (EstudianteContexto ctx : contextos.values()) {
-                ctx.activarSkinExamen("estudiantetriste");
-            }
+    }
+
+    private void aplicarSkinExamen() {
+        for (String[] reemplazo : SPRITES_EXAMEN) {
+            swapSprite(reemplazo[0], reemplazo[1]);
+        }
+        for (EstudianteContexto contexto : contextos.values()) {
+            contexto.activarSkinExamen("estudiantetriste");
         }
     }
 
@@ -936,15 +920,8 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
      * Normal → sin decorador, comportamiento base.
      */
     public void activarHabilidad(String habilidad, PanelHUD hud) {
-        Jugador jugador = modeloTablero.getJugador();
-        IEntidad entidad;
-        switch (habilidad) {
-            default:
-                entidad = jugador;
-                break;
-        }
-        modeloTablero.setHabilidad(entidad);
-        String nombre = modeloTablero.getNombreHabilidadActiva();
+        controlador.restaurarHabilidadBase();
+        String nombre = controlador.getNombreHabilidadActiva();
         hud.actualizarHabilidad(nombre);
         notificarHabilidad();
     }

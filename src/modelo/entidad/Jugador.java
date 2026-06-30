@@ -5,19 +5,12 @@ import modelo.decorador.IEntidad;
 
 
 public class Jugador implements IEntidad {
-    private static Jugador instance;
-
     private int x;
     private int y;
 
     public Jugador(int x, int y) {
         this.x = x;
         this.y = y;
-        instance = this;
-    }
-
-    public static Jugador getInstance() {
-        return instance;
     }
 
     public int getX() { return x; }

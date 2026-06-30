@@ -27,4 +27,9 @@ public class ComportamientoLlave implements ComportamientoCaja{
 		return false;
 	}
 
+	@Override
+	public boolean esLlave() {
+		return true;
+	}
+
 }

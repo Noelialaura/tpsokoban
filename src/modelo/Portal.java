@@ -1,6 +1,6 @@
 package modelo;
 
-import modelo.builder.ConstructorNivel;
+import modelo.builder.NivelBuilder;
 
 public class Portal implements Casilla {
 
@@ -43,7 +43,7 @@ public class Portal implements Casilla {
 	}
 
 	@Override
-	public void registrarEnConstructor(ConstructorNivel constructor) {
-		constructor.registrarPortal(this);
+	public void registrarEnBuilder(NivelBuilder builder) {
+		builder.registrarPortal(this);
 	}
 }

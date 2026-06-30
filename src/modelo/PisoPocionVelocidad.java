@@ -29,6 +29,9 @@ public class PisoPocionVelocidad implements Casilla {
     public boolean esPocion() { return !recogida; }
 
     @Override
+    public boolean esPocionVelocidad() { return !recogida; }
+
+    @Override
     public String getTipoPocion() { return recogida ? null : "Velocidad"; }
 
     @Override

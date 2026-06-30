@@ -7,10 +7,11 @@ import modelo.Casilla;
 import modelo.Cerrojo;
 import modelo.ParedCerrojo;
 import modelo.Portal;
-import modelo.ResultadoCarga;
 import modelo.entidad.Caja;
+import modelo.entidad.Jugador;
+import modelo.entidad.Tablero;
 
-public class ConstructorNivel implements BuilderNivel {
+public class NivelBuilder implements BuilderNivel {
     private Casilla[][] grilla;
     private List<Caja> cajas;
     private List<Portal> portales;
@@ -20,8 +21,9 @@ public class ConstructorNivel implements BuilderNivel {
     private int jugadorY;
     private int filas;
     private int columnas;
+    private boolean jugadorUbicado;
 
-    public ConstructorNivel() {
+    public NivelBuilder() {
         cajas = new ArrayList<>();
         portales = new ArrayList<>();
         cerrojos = new ArrayList<>();
@@ -36,7 +38,7 @@ public class ConstructorNivel implements BuilderNivel {
 
     public void agregarCasilla(int fila, int columna, Casilla casilla) {
         grilla[fila][columna] = casilla;
-        casilla.registrarEnConstructor(this);
+        casilla.registrarEnBuilder(this);
     }
 
     public void registrarPortal(Portal portal) {
@@ -58,12 +60,26 @@ public class ConstructorNivel implements BuilderNivel {
     public void ubicarJugador(int x, int y) {
         jugadorX = x;
         jugadorY = y;
+        jugadorUbicado = true;
     }
 
-    public ResultadoCarga construir() {
+    public Tablero construir() {
+        validarNivelConstruido();
         linkearPortales();
         linkearCerrojos();
-        return new ResultadoCarga(grilla, jugadorX, jugadorY, cajas, filas, columnas);
+        return new Tablero(grilla, cajas, new Jugador(jugadorX, jugadorY));
+    }
+
+    private void validarNivelConstruido() {
+        if (grilla == null || filas == 0 || columnas == 0) {
+            throw new IllegalStateException("El nivel no tiene tablero.");
+        }
+        if (!jugadorUbicado) {
+            throw new IllegalStateException("El nivel no tiene jugador inicial.");
+        }
+        if (portales.size() % 2 != 0) {
+            throw new IllegalStateException("Los portales deben estar en pares.");
+        }
     }
 
     private void linkearPortales() {

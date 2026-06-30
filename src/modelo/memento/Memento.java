@@ -16,7 +16,9 @@ public class Memento {
 		this.posY = jugador.getY();
 		this.estadoCajas = new ArrayList<>();
 		for(Caja c : cajas) {
-			this.estadoCajas.add(new EstadoCaja(c.getX(), c.getY(), c.estaRota()));
+			Integer resistencia = null;
+			resistencia = c.getComportamiento().getResistencia();
+			this.estadoCajas.add(new EstadoCaja(c.getX(), c.getY(), c.estaRota(), resistencia));
 		}
 	}
 	
@@ -28,8 +30,12 @@ public class Memento {
 		public final int x;
 		public final int y;
 		public final boolean rota;
-		public EstadoCaja(int x, int y, boolean rota) {
-			this.x = x; this.y = y; this.rota = rota;
+		public final Integer resistencia;
+		public EstadoCaja(int x, int y, boolean rota, Integer resistencia) {
+			this.x = x;
+			this.y = y;
+			this.rota = rota;
+			this.resistencia = resistencia;
 		}
 	}
 }

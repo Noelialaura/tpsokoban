@@ -7,7 +7,6 @@ public class CreadorParedCerrojo implements CreadorCasilla{
 
 	@Override
 	public Casilla crearCasilla() {
-		// TODO Auto-generated method stub
 		return new ParedCerrojo();
 	}
 

@@ -1,6 +1,6 @@
 package modelo;
 
-import modelo.builder.ConstructorNivel;
+import modelo.builder.NivelBuilder;
 import modelo.observer.EventoJuego;
 import modelo.observer.SuscriptorJuego;
 
@@ -31,6 +31,9 @@ public class ParedCerrojo implements Casilla, SuscriptorJuego {
 	public boolean esPortal() { return false; }
 
 	@Override
+	public boolean esParedCerrojo() { return true; }
+
+	@Override
 	public void abrir() {
 		transitable = true;
 	}
@@ -51,7 +54,7 @@ public class ParedCerrojo implements Casilla, SuscriptorJuego {
 	}
 
 	@Override
-	public void registrarEnConstructor(ConstructorNivel constructor) {
-		constructor.registrarParedCerrojo(this);
+	public void registrarEnBuilder(NivelBuilder builder) {
+		builder.registrarParedCerrojo(this);
 	}
 }

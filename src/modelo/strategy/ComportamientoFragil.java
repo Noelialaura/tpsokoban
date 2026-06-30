@@ -34,7 +34,24 @@ public class ComportamientoFragil implements ComportamientoCaja{
 	}
 
 	@Override
+	public Integer getResistencia() {
+		return resistencia;
+	}
+
+	@Override
+	public void setResistencia(Integer resistencia) {
+		if (resistencia != null) {
+			this.resistencia = resistencia;
+		}
+	}
+
+	@Override
 	public boolean trabajaConMeta() {
+		return true;
+	}
+
+	@Override
+	public boolean esFragil() {
 		return true;
 	}
 

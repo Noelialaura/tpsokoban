@@ -214,21 +214,24 @@ public class Tablero implements PublicadorJuego {
             }
             
             cajaReal.moverA(cFila, cColumna);
-            
-            if (estado.rota) {
-                cajaReal.romper();
-            }
+            cajaReal.restaurarRota(estado.rota);
+
+            cajaReal.getComportamiento().setResistencia(estado.resistencia);
         }
 
         for (int fila = 0; fila < getFilas(); fila++) {
             for (int columna = 0; columna < getColumnas(); columna++) {
                 casillas[fila][columna].desocupar();
+                casillas[fila][columna].desactivar(this);
             }
         }
         
         for (Caja caja : cajas) {
             if (!caja.estaRota() && estaDentro(caja.getY(), caja.getX())) {
                 obtenerCasilla(caja.getY(), caja.getX()).ocupar();
+                if (!caja.trabajaConMeta()) {
+                    activarCasillaBajoCaja(caja);
+                }
             }
         }
     }

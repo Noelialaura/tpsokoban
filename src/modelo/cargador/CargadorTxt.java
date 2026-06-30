@@ -1,8 +1,8 @@
 package modelo.cargador;
 
 import modelo.*;
-import modelo.builder.ConstructorNivel;
 import modelo.builder.DirectorNivel;
+import modelo.builder.NivelBuilder;
 import modelo.fabrica.*;
 import modelo.PisoExamen;
 import modelo.PisoPocionVelocidad;
@@ -63,10 +63,10 @@ public class CargadorTxt implements CargadorNivel {
     }
 
     @Override
-    public ResultadoCarga cargar(String ruta) {
+    public modelo.entidad.Tablero cargar(String ruta) {
         List<String> lineas = leerLineas(ruta);
 
-        ConstructorNivel builder = new ConstructorNivel();
+        NivelBuilder builder = new NivelBuilder();
         DirectorNivel director = new DirectorNivel(builder);
         director.construirDesdeLineas(lineas, this::obtenerCreador);
         return builder.construir();
