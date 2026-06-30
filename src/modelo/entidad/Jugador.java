@@ -10,7 +10,7 @@ public class Jugador implements IEntidad {
     private int x;
     private int y;
 
-    public Jugador(int x, int y) {
+    private Jugador(int x, int y) {
         this.x = x;
         this.y = y;
         instance = this;
@@ -19,6 +19,12 @@ public class Jugador implements IEntidad {
     public static Jugador getInstance() {
         return instance;
     }
+        public static Jugador getInstance(int x,int y) {
+        if (instance == null){
+            instance = new Jugador(x,y);
+        }
+        return instance;
+        }
 
     public int getX() { return x; }
     public int getY() { return y; }
