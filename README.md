@@ -75,3 +75,5 @@ Para correr el juego, se debe ejecutar el archivo Main.java. Este abrira una ven
 
 Ya no está Bach dentro del juego :(
 Lo elminamos en la version anterior.
+
+El estado de GTA VI actualmente: HelloWorld("print")
