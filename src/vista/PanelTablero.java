@@ -107,7 +107,7 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
     
     private final Set<String> casillasRotas = new java.util.HashSet<>();
     private final Map<Caja, EstudianteContexto> contextos = new HashMap<>();
-    private final GestorSonido gestorSonido = new GestorSonido();
+    private final GestorSonido gestorSonido = GestorSonido.getInstance();
 
     public PanelTablero(NivelSwing nivel, EstadoListener estadoListener) {
         this.nivel = nivel;

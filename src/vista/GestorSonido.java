@@ -10,10 +10,18 @@ public class GestorSonido {
     
     private static final String ASSETS_DIR = "aca va el directorio";
     
+    private static GestorSonido instance;
     private Map<String, Clip> soundCache;
 
-    public GestorSonido() {
+    private GestorSonido() {
         soundCache = new HashMap<>();
+    }
+
+    public static GestorSonido getInstance() {
+        if (instance == null) {
+            instance = new GestorSonido();
+        }
+        return instance;
     }
 
     public void loadSound(String alias, String fileName) {

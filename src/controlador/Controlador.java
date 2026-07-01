@@ -19,7 +19,6 @@ import modelo.strategy.ComportamientoNormal;
 
 public class Controlador {
     private static Controlador instance;
-    private GestorNiveles gestorNiveles;
     private Tablero tableroActual;
     
     private Controlador() {
@@ -54,7 +53,8 @@ public class Controlador {
     }
 
     public boolean avanzarAlSiguienteNivel() {
-        if (gestorNiveles == null || !gestorNiveles.avanzarNivel()) {
+        GestorNiveles gestor = GestorNiveles.getInstance();
+        if (gestor == null || !gestor.avanzarNivel()) {
             return false;
         }
         tableroActual = cargarNivelActual();
@@ -75,7 +75,7 @@ public class Controlador {
     }
 
     public void configurarNiveles(List<String> rutas) {
-        gestorNiveles = new GestorNiveles(rutas);
+        GestorNiveles.getInstance(rutas);
     }
 
     public void configurarNivel(String ruta) {
@@ -83,18 +83,21 @@ public class Controlador {
     }
 
     private Tablero cargarNivelActual() {
-        if (gestorNiveles == null) {
+        GestorNiveles gestor = GestorNiveles.getInstance();
+        if (gestor == null) {
             return null;
         }
-        return cargarNivel(gestorNiveles.getRutaActual());
+        return cargarNivel(gestor.getRutaActual());
     }
 
     public int getNumeroNivelActual() {
-        return gestorNiveles == null ? 1 : gestorNiveles.getNumeroNivelActual();
+        GestorNiveles gestor = GestorNiveles.getInstance();
+        return gestor == null ? 1 : gestor.getNumeroNivelActual();
     }
 
     public int getTotalNiveles() {
-        return gestorNiveles == null ? 1 : gestorNiveles.getTotalNiveles();
+        GestorNiveles gestor = GestorNiveles.getInstance();
+        return gestor == null ? 1 : gestor.getTotalNiveles();
     }
 
     private List<Caja> crearListaCajas(boolean[][] origen) {
