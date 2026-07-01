@@ -34,6 +34,22 @@ public class GestorSonido {
             e.printStackTrace();
         }
     }
+
+    public void loadSoundFromPath(String alias, String rutaCompleta) {
+        if (soundCache.containsKey(alias)) {
+            return;
+        }
+        try {
+            File audioFile = new File(rutaCompleta);
+            AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
+            Clip clip = AudioSystem.getClip();
+            clip.open(audioStream);
+            soundCache.put(alias, clip);
+        } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
+            System.err.println("Error al cargar el sonido desde ruta: " + rutaCompleta);
+            e.printStackTrace();
+        }
+    }
     
     public void play(String alias) {
         Clip clip = soundCache.get(alias);

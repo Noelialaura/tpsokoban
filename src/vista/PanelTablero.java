@@ -107,6 +107,7 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
     
     private final Set<String> casillasRotas = new java.util.HashSet<>();
     private final Map<Caja, EstudianteContexto> contextos = new HashMap<>();
+    private final GestorSonido gestorSonido = new GestorSonido();
 
     public PanelTablero(NivelSwing nivel, EstadoListener estadoListener) {
         this.nivel = nivel;
@@ -115,10 +116,12 @@ public class PanelTablero extends JPanel implements SuscriptorJuego {
         totalCajas = contarCajasQueTrabajanConMeta();
 
         cargarSprites();
+        gestorSonido.loadSoundFromPath("elevator", "assets/musica/elevator.wav");
+        gestorSonido.loop("elevator");
         setBackground(new Color(19, 25, 27));
         setPreferredSize(new Dimension(
-                columnas * TAMANIO_CELDA + MARGEN * 2,
-                filas * TAMANIO_CELDA + MARGEN * 2));
+                 columnas * TAMANIO_CELDA + MARGEN * 2,
+                 filas * TAMANIO_CELDA + MARGEN * 2));
         configurarAnimacion();
         configurarControles();
         reiniciar();
