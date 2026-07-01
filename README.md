@@ -70,3 +70,8 @@ src/
 | `assets/` | Recursos del juego |
 
 ---
+
+Para correr el juego, se debe ejecutar el archivo Main.java. Este abrira una ventana con la demo.
+
+Ya no está Bach dentro del juego :(
+Lo elminamos en la version anterior.
